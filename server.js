@@ -25,6 +25,69 @@ db.connect((err) => {
     }
 });
 
+// POST API to create a new account
+app.post("/add-account", (req, res) => {
+    const {
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card
+    } = req.body;
+
+    // Set default password as account_name@123
+    const password = `${account_name}@123`;
+
+    const sql = `
+        INSERT INTO account_details (
+            account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+            phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
+            ifsc_code, branch, gst_in, aadhar_card, pan_card
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card
+    ];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error inserting account details:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(201).json({ message: "Account added successfully!", accountId: result.insertId });
+    });
+});
+
+// GET API to fetch all accounts
+app.get("/accounts", (req, res) => {
+    const sql = "SELECT * FROM account_details";
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching accounts:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json(results);
+    });
+});
+
+// GET API to fetch an account by ID
+app.get("/account/:id", (req, res) => {
+    const { id } = req.params;
+    const sql = "SELECT * FROM account_details WHERE id = ?";
+
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error("Error fetching account:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        res.status(200).json(result[0]);
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
