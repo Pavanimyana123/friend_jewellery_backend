@@ -1,6 +1,5 @@
 const Account = require("../models/accountModel");
 
-// Create a new account
 exports.addAccount = (req, res) => {
     Account.create(req.body, (err, result) => {
         if (err) {
@@ -11,7 +10,6 @@ exports.addAccount = (req, res) => {
     });
 };
 
-// Fetch all accounts
 exports.getAllAccounts = (req, res) => {
     Account.getAll((err, results) => {
         if (err) {
@@ -22,7 +20,6 @@ exports.getAllAccounts = (req, res) => {
     });
 };
 
-// Fetch an account by ID
 exports.getAccountById = (req, res) => {
     const { id } = req.params;
     Account.getById(id, (err, result) => {
