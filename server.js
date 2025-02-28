@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 
 const app = express();
-const PORT = 5000; 
+const PORT = 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Bunny@123',
+    password: 'Pavani@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -29,27 +29,27 @@ db.connect((err) => {
 // Dynamic Customer Login API
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
-  
+
     const sql = "SELECT * FROM account_details WHERE email = ?";
     db.query(sql, [email], (err, results) => {
-      if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ message: "Internal Server Error" });
-      }
-  
-      if (results.length === 0) {
-        return res.status(401).json({ message: "User not found" });
-      }
-  
-      const user = results[0];
-  
-      if (user.password !== password) {
-        return res.status(401).json({ message: "Invalid Credentials" });
-      }
-  
-      res.status(200).json({ message: "Login Successful" });
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+
+        if (results.length === 0) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
+        const user = results[0];
+
+        if (user.password !== password) {
+            return res.status(401).json({ message: "Invalid Credentials" });
+        }
+
+        res.status(200).json({ message: "Login Successful" });
     });
-  });
+});
 
 // POST API to create a new account
 app.post("/add-account", (req, res) => {
@@ -169,12 +169,83 @@ app.delete("/delete-account/:id", (req, res) => {
 app.get("/states", (req, res) => {
     const sql = "SELECT * FROM states";
     db.query(sql, (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json(result);
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(result);
     });
-  });
+});
+
+app.post("/api/orders", (req, res) => {
+    const {
+        account_id,
+        mobile,
+        account_name,
+        email,
+        address1,
+        address2,
+        city,
+        pincode,
+        state,
+        state_code,
+        aadhar_card,
+        gst_in,
+        pan_card,
+        date,
+        order_number,
+        metal,
+        category,
+        subcategory,
+        product_design_name,
+        purity,
+        gross_weight,
+        stone_weight,
+        stone_price,
+        weight_bw,
+        wastage_on,
+        wastage_percentage,
+        wastage_weight,
+        total_weight_aw,
+        rate,
+        amount,
+        mc_on,
+        mc_percentage,
+        total_mc,
+        tax_percentage,
+        tax_amount,
+        total_price,
+        remarks,
+        image_url,
+    } = req.body;
+
+    const sql = `
+    INSERT INTO orders (
+        account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+        aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
+        gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+        total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+        remarks, image_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`;
+
+const values = [
+    account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code,
+    aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity,
+    gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight,
+    total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price,
+    remarks, image_url || null // Ensure `image_url` is included even if null
+];
+
+db.query(sql, values, (err, result) => {
+    if (err) {
+        console.error("Error inserting order:", err);
+        return res.status(500).json({ error: "Database error" });
+    }
+    res.status(201).json({ message: "Order added successfully", orderId: result.insertId });
+});
+
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
