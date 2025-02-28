@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -24,6 +24,32 @@ db.connect((err) => {
         console.log("Connected to MySQL database");
     }
 });
+
+
+// Dynamic Customer Login API
+app.post("/login", (req, res) => {
+    const { email, password } = req.body;
+  
+    const sql = "SELECT * FROM account_details WHERE email = ?";
+    db.query(sql, [email], (err, results) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ message: "Internal Server Error" });
+      }
+  
+      if (results.length === 0) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      const user = results[0];
+  
+      if (user.password !== password) {
+        return res.status(401).json({ message: "Invalid Credentials" });
+      }
+  
+      res.status(200).json({ message: "Login Successful" });
+    });
+  });
 
 // POST API to create a new account
 app.post("/add-account", (req, res) => {
@@ -86,6 +112,57 @@ app.get("/account/:id", (req, res) => {
             return res.status(404).json({ message: "Account not found" });
         }
         res.status(200).json(result[0]);
+    });
+});
+
+app.put("/update-account/:id", (req, res) => {
+    const accountId = req.params.id;
+    const {
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card
+    } = req.body;
+
+    const sql = `
+        UPDATE account_details
+        SET account_name=?, print_name=?, account_group=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
+            phone=?, mobile=?, email=?, birthday=?, anniversary=?, bank_account_no=?, bank_name=?,
+            ifsc_code=?, branch=?, gst_in=?, aadhar_card=?, pan_card=?
+        WHERE id=?
+    `;
+
+    const values = [
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card, accountId
+    ];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error updating account:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Account not found" });
+        }
+        res.status(200).json({ message: "Account updated successfully!" });
+    });
+});
+
+app.delete("/delete-account/:id", (req, res) => {
+    const accountId = req.params.id;
+
+    const sql = "DELETE FROM account_details WHERE id = ?";
+
+    db.query(sql, [accountId], (err, result) => {
+        if (err) {
+            console.error("Error deleting account:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Account not found" });
+        }
+        res.status(200).json({ message: "Account deleted successfully!" });
     });
 });
 
