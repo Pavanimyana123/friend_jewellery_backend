@@ -166,6 +166,16 @@ app.delete("/delete-account/:id", (req, res) => {
     });
 });
 
+app.get("/states", (req, res) => {
+    const sql = "SELECT * FROM states";
+    db.query(sql, (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(result);
+    });
+  });
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
