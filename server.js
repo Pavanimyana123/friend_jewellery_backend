@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -189,7 +189,7 @@ app.post("/api/orders", (req, res) => {
         aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
         total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-        remarks, image_url
+        remarks, image_url, order_status
     ) VALUES ?
     `;
 
@@ -232,7 +232,8 @@ app.post("/api/orders", (req, res) => {
         order.tax_amount || 0, 
         order.total_price || 0, 
         order.remarks || "", 
-        order.image_url || null
+        order.image_url || null,
+        order.order_status || ""
     ]);
 
     db.query(sql, [values], (err, result) => {
@@ -244,6 +245,17 @@ app.post("/api/orders", (req, res) => {
     });
 });
 
+app.get("/api/orders", (req, res) => {
+    const sql = "SELECT * FROM orders";
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching accounts:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json(results);
+    });
+});
 
 
 app.listen(PORT, () => {
