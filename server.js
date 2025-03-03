@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Bunny@123',
+    password: 'Pavani@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -62,6 +62,9 @@ app.post("/add-account", (req, res) => {
     // Set default password as account_name@123
     const password = `${account_name}@123`;
 
+    // Convert empty string values to NULL
+    const sanitizeValue = (value) => (value === "" ? null : value);
+
     const sql = `
         INSERT INTO account_details (
             account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
@@ -71,9 +74,12 @@ app.post("/add-account", (req, res) => {
     `;
 
     const values = [
-        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
-        phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
-        ifsc_code, branch, gst_in, aadhar_card, pan_card
+        account_name, print_name, account_group, sanitizeValue(address1), sanitizeValue(address2),
+        sanitizeValue(city), sanitizeValue(pincode), sanitizeValue(state), sanitizeValue(state_code),
+        sanitizeValue(phone), sanitizeValue(mobile), sanitizeValue(email), password,
+        sanitizeValue(birthday), sanitizeValue(anniversary), sanitizeValue(bank_account_no),
+        sanitizeValue(bank_name), sanitizeValue(ifsc_code), sanitizeValue(branch),
+        sanitizeValue(gst_in), sanitizeValue(aadhar_card), sanitizeValue(pan_card)
     ];
 
     db.query(sql, values, (err, result) => {
@@ -84,6 +90,7 @@ app.post("/add-account", (req, res) => {
         res.status(201).json({ message: "Account added successfully!", accountId: result.insertId });
     });
 });
+
 
 // GET API to fetch all accounts
 app.get("/accounts", (req, res) => {
@@ -220,15 +227,15 @@ app.post("/api/orders", (req, res) => {
         order.stone_price || 0, 
         order.weight_bw || 0, 
         order.wastage_on || "", 
-        order.wastage_percentage || 0, 
+        parseFloat(order.wastage_percentage) || 0, // Ensure numeric value
         order.wastage_weight || 0, 
         order.total_weight_aw || 0, 
         order.rate || 0, 
         order.amount || 0, 
         order.mc_on || "", 
-        order.mc_percentage || 0, 
+        parseFloat(order.mc_percentage) || 0, // Ensure numeric value
         order.total_mc || 0, 
-        order.tax_percentage || 0, 
+        parseFloat(order.tax_percentage) || 0, // Ensure numeric value
         order.tax_amount || 0, 
         order.total_price || 0, 
         order.remarks || "", 
