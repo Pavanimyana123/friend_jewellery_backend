@@ -8,6 +8,4 @@ router.get("/account/:id", accountController.getAccountById);
 router.put("/update-account/:id", accountController.updateAccount);
 router.delete("/delete-account/:id", accountController.deleteAccount);
 
-router.post("/login", accountController.login);
-
 module.exports = router;

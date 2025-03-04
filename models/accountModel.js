@@ -56,18 +56,10 @@ const updateAccount = (accountId, accountData, callback) => {
     db.query(sql, values, callback);
 };
 
-// Function to delete an account by ID
 const deleteAccount = (accountId, callback) => {
     const sql = "DELETE FROM account_details WHERE id = ?";
 
     db.query(sql, [accountId], callback);
 };
 
-// Function to find user by email
-const AccountfindByEmail = (email, callback) => {
-    const sql = "SELECT * FROM account_details WHERE email = ?";
-    db.query(sql, [email], callback);
-};
-
-
-module.exports = { create, getAll, getById, updateAccount,deleteAccount,AccountfindByEmail };
+module.exports = { create, getAll, getById, updateAccount,deleteAccount };
