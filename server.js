@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
+    password: 'Bharath@123',
     // password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
@@ -277,6 +277,25 @@ app.get("/api/orders", (req, res) => {
         res.status(200).json(results);
     });
 });
+
+// ✅ PUT API - Update Order with Assigned Worker
+app.put("/api/orders/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { assigned_status, worker_id, worker_name } = req.body;
+    const sql = `
+        UPDATE orders 
+        SET assigned_status = ?, worker_id = ?, worker_name = ? 
+        WHERE id = ?`;
+
+    db.query(sql, [assigned_status, worker_id, worker_name, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json({ message: "Order updated successfully" });
+    });
+});
+
 
 
 app.listen(PORT, () => {
