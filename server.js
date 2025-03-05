@@ -3,6 +3,20 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const moment = require("moment");
+const multer = require("multer");
+const path = require("path");
+
+
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: "./uploads/",
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    },
+});
+
+const upload = multer({ storage });
 
 const app = express();
 const PORT = 5000;
@@ -25,6 +39,97 @@ db.connect((err) => {
     } else {
         console.log("Connected to MySQL database");
     }
+});
+
+app.use('/uploads', express.static('uploads'));
+
+app.post("/api/orders", upload.single("image"), (req, res) => {
+    try {
+        // Parse order JSON from request body
+        const order = JSON.parse(req.body.order);  
+        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+        console.log("Uploaded Image URL:", imageUrl); // Debugging image upload
+
+        // SQL Query for inserting order
+        const sql = `
+            INSERT INTO orders (
+                account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+                aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
+                gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+                total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+                remarks, image_url, order_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        // Order values
+        const values = [
+            order.account_id || null,
+            order.mobile || "",
+            order.account_name || "",
+            order.email || "",
+            order.address1 || "",
+            order.address2 || "",
+            order.city || "",
+            order.pincode || "",
+            order.state || "",
+            order.state_code || "",
+            order.aadhar_card || "",
+            order.gst_in || "",
+            order.pan_card || "",
+            order.date || new Date().toISOString().split("T")[0],
+            order.order_number || "",
+            order.metal || "",
+            order.category || "",
+            order.subcategory || "",
+            order.product_design_name || "",
+            order.purity || null,
+            order.gross_weight || 0,
+            order.stone_weight || 0,
+            order.stone_price || 0,
+            order.weight_bw || 0,
+            order.wastage_on || "",
+            parseFloat(order.wastage_percentage) || 0,
+            order.wastage_weight || 0,
+            order.total_weight_aw || 0,
+            order.rate || 0,
+            order.amount || 0,
+            order.mc_on || "",
+            parseFloat(order.mc_percentage) || 0,
+            order.total_mc || 0,
+            parseFloat(order.tax_percentage) || 0,
+            order.tax_amount || 0,
+            order.total_price || 0,
+            order.remarks || "",
+            imageUrl, // Save image URL in database
+            order.order_status || "",
+        ];
+
+        // Execute SQL Query
+        db.query(sql, values, (err, result) => {
+            if (err) {
+                console.error("Error inserting order:", err);
+                return res.status(500).json({ error: "Database error", details: err.message });
+            }
+            res.status(201).json({ message: "Order added successfully", insertedRows: result.affectedRows });
+        });
+
+    } catch (error) {
+        console.error("Error processing order:", error);
+        res.status(400).json({ error: "Invalid request format", details: error.message });
+    }
+});
+
+app.get("/api/orders", (req, res) => {
+    const sql = "SELECT * FROM orders";
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching accounts:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json(results);
+    });
 });
 
 
@@ -58,7 +163,6 @@ app.post("/login", (req, res) => {
         });
     });
 });
-
 
 // POST API to create a new account
 app.post("/add-account", (req, res) => {
@@ -99,7 +203,6 @@ app.post("/add-account", (req, res) => {
         res.status(201).json({ message: "Account added successfully!", accountId: result.insertId });
     });
 });
-
 
 // GET API to fetch all accounts
 app.get("/accounts", (req, res) => {
@@ -196,88 +299,6 @@ app.get("/states", (req, res) => {
         res.json(result);
     });
 });
-
-app.post("/api/orders", (req, res) => {
-    const orders = req.body.orders;
-
-    if (!Array.isArray(orders) || orders.length === 0) {
-        return res.status(400).json({ error: "Invalid order data" });
-    }
-
-    const sql = `
-    INSERT INTO orders (
-        account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-        aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
-        gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
-        total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-        remarks, image_url, order_status
-    ) VALUES ?
-    `;
-
-    // Convert orders array into an array of value arrays with default values for optional fields
-    const values = orders.map(order => [
-        order.account_id || null, 
-        order.mobile || "", 
-        order.account_name || "", 
-        order.email || "", 
-        order.address1 || "", 
-        order.address2 || "", 
-        order.city || "", 
-        order.pincode || "", 
-        order.state || "", 
-        order.state_code || "",
-        order.aadhar_card || "", 
-        order.gst_in || "", 
-        order.pan_card || "", 
-        order.date || new Date().toISOString().split('T')[0], // Default to today's date
-        order.order_number || "", 
-        order.metal || "", 
-        order.category || "", 
-        order.subcategory || "", 
-        order.product_design_name || "", 
-        order.purity || null, 
-        order.gross_weight || 0, 
-        order.stone_weight || 0, 
-        order.stone_price || 0, 
-        order.weight_bw || 0, 
-        order.wastage_on || "", 
-        parseFloat(order.wastage_percentage) || 0, // Ensure numeric value
-        order.wastage_weight || 0, 
-        order.total_weight_aw || 0, 
-        order.rate || 0, 
-        order.amount || 0, 
-        order.mc_on || "", 
-        parseFloat(order.mc_percentage) || 0, // Ensure numeric value
-        order.total_mc || 0, 
-        parseFloat(order.tax_percentage) || 0, // Ensure numeric value
-        order.tax_amount || 0, 
-        order.total_price || 0, 
-        order.remarks || "", 
-        order.image_url || null,
-        order.order_status || ""
-    ]);
-
-    db.query(sql, [values], (err, result) => {
-        if (err) {
-            console.error("Error inserting orders:", err);
-            return res.status(500).json({ error: "Database error", details: err.message });
-        }
-        res.status(201).json({ message: "Orders added successfully", insertedRows: result.affectedRows });
-    });
-});
-
-app.get("/api/orders", (req, res) => {
-    const sql = "SELECT * FROM orders";
-
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Error fetching accounts:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-        res.status(200).json(results);
-    });
-});
-
 
 // ✅ PUT API - Update Order with Assigned Worker
 app.put("/api/orders/:orderId", (req, res) => {
