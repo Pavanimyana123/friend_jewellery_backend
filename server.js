@@ -278,6 +278,26 @@ app.get("/api/orders", (req, res) => {
     });
 });
 
+
+// ✅ PUT API - Update Order with Assigned Worker
+app.put("/api/orders/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { assigned_status, worker_id, worker_name } = req.body;
+    const sql = `
+        UPDATE orders 
+        SET assigned_status = ?, worker_id = ?, worker_name = ? 
+        WHERE id = ?`;
+
+    db.query(sql, [assigned_status, worker_id, worker_name, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json({ message: "Order updated successfully" });
+    });
+});
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
