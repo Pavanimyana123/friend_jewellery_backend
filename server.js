@@ -31,8 +31,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
-    // password: 'Bunny@123',
+    // password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -304,22 +304,99 @@ app.get("/states", (req, res) => {
 });
 
 // ✅ PUT API - Update Order with Assigned Worker
-app.put("/api/orders/:orderId", (req, res) => {
+// app.put("/api/orders/:orderId", (req, res) => {
+//     const { orderId } = req.params;
+//     const { order_status, assigned_status, worker_id, worker_name, work_status } = req.body;
+
+//     const sql = `
+//         UPDATE orders 
+//         SET order_status = ?, assigned_status = ?, worker_id = ?, worker_name = ?, work_status = ? 
+//         WHERE id = ?`;
+
+//     db.query(sql, [order_status, assigned_status, worker_id, worker_name, work_status, orderId], (err, result) => {
+//         if (err) {
+//             console.error("Error updating order:", err);
+//             return res.status(500).json({ error: "Database error" });
+//         }
+
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ error: "Order not found" });
+//         }
+
+//         res.status(200).json({ message: "Order updated successfully" });
+//     });
+// });
+
+app.put("/api/orders/assign/:orderId", (req, res) => {
     const { orderId } = req.params;
-    const { assigned_status, worker_id, worker_name } = req.body;
+    const { assigned_status, worker_id, worker_name, work_status } = req.body;
+
     const sql = `
         UPDATE orders 
-        SET assigned_status = ?, worker_id = ?, worker_name = ? 
+        SET assigned_status = ?, worker_id = ?, worker_name = ?, work_status = ? 
         WHERE id = ?`;
 
-    db.query(sql, [assigned_status, worker_id, worker_name, orderId], (err, result) => {
+    db.query(sql, [assigned_status, worker_id, worker_name, work_status, orderId], (err, result) => {
         if (err) {
-            console.error("Error updating order:", err);
+            console.error("Error updating order assignment:", err);
             return res.status(500).json({ error: "Database error" });
         }
-        res.status(200).json({ message: "Order updated successfully" });
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order assignment updated successfully" });
     });
 });
+
+app.put("/api/orders/status/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { order_status } = req.body;
+
+    const sql = `
+        UPDATE orders 
+        SET order_status = ? 
+        WHERE id = ?`;
+
+    db.query(sql, [order_status, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating order status:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order status updated successfully" });
+    });
+});
+
+app.put("/api/orders/work-status/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { work_status } = req.body;
+
+    const sql = `
+        UPDATE orders 
+        SET work_status = ? 
+        WHERE id = ?`;
+
+    db.query(sql, [work_status, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating work status:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Work status updated successfully" });
+    });
+});
+
+
 
 
 app.listen(PORT, () => {
