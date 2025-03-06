@@ -5,16 +5,20 @@ const bodyParser = require("body-parser");
 const moment = require("moment");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 
 
 // Configure multer storage
 const storage = multer.diskStorage({
-    destination: "./uploads/",
+    destination: (req, file, cb) => {
+        cb(null, "uploads/"); // Ensure this directory exists
+    },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+        cb(null, Date.now() + path.extname(file.originalname));
     },
 });
+
 
 const upload = multer({ storage });
 
@@ -43,82 +47,81 @@ db.connect((err) => {
 
 app.use('/uploads', express.static('uploads'));
 
-app.post("/api/orders", upload.single("image"), (req, res) => {
+app.post("/api/orders", upload.array("image"), async (req, res) => {
     try {
-        // Parse order JSON from request body
-        const order = JSON.parse(req.body.order);  
-        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+        // console.log("Uploaded Files:", req.files);
+        // console.log("Request Body:", req.body.order);
 
-        console.log("Uploaded Image URL:", imageUrl); // Debugging image upload
+        if (!req.body.order) {
+            return res.status(400).json({ error: "Missing 'order' field in request body" });
+        }
 
-        // SQL Query for inserting order
-        const sql = `
-            INSERT INTO orders (
-                account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-                aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
-                gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
-                total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-                remarks, image_url, order_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+        const orders = Array.isArray(req.body.order) ? req.body.order : [req.body.order];
 
-        // Order values
-        const values = [
-            order.account_id || null,
-            order.mobile || "",
-            order.account_name || "",
-            order.email || "",
-            order.address1 || "",
-            order.address2 || "",
-            order.city || "",
-            order.pincode || "",
-            order.state || "",
-            order.state_code || "",
-            order.aadhar_card || "",
-            order.gst_in || "",
-            order.pan_card || "",
-            order.date || new Date().toISOString().split("T")[0],
-            order.order_number || "",
-            order.metal || "",
-            order.category || "",
-            order.subcategory || "",
-            order.product_design_name || "",
-            order.purity || null,
-            order.gross_weight || 0,
-            order.stone_weight || 0,
-            order.stone_price || 0,
-            order.weight_bw || 0,
-            order.wastage_on || "",
-            parseFloat(order.wastage_percentage) || 0,
-            order.wastage_weight || 0,
-            order.total_weight_aw || 0,
-            order.rate || 0,
-            order.amount || 0,
-            order.mc_on || "",
-            parseFloat(order.mc_percentage) || 0,
-            order.total_mc || 0,
-            parseFloat(order.tax_percentage) || 0,
-            order.tax_amount || 0,
-            order.total_price || 0,
-            order.remarks || "",
-            imageUrl, // Save image URL in database
-            order.order_status || "",
-        ];
+        const queries = orders.map(async (orderStr, index) => {
+            const orderData = JSON.parse(orderStr);
 
-        // Execute SQL Query
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                console.error("Error inserting order:", err);
-                return res.status(500).json({ error: "Database error", details: err.message });
+            let imageUrl = null;
+            let imageFile = req.files?.[index]; // Multer uploaded file
+
+            // Handle Base64 Image Conversion
+            if (orderData.imagePreview && orderData.imagePreview.startsWith("data:image")) {
+                const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
+                const imageBuffer = Buffer.from(base64Data, "base64");
+                const imageName = `uploads/${Date.now()}.png`;
+
+                fs.writeFileSync(imageName, imageBuffer); // Save file
+                imageUrl = `/${imageName}`; // Store path for DB
+            } 
+            // If file is uploaded via FormData
+            else if (imageFile) {
+                imageUrl = `/uploads/${imageFile.filename}`;
             }
-            res.status(201).json({ message: "Order added successfully", insertedRows: result.affectedRows });
+
+            return new Promise((resolve, reject) => {
+                const sql = `INSERT INTO orders (
+                    account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+                    aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
+                    gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+                    total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+                    remarks, image_url, order_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+                const values = [
+                    orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
+                    orderData.email || "", orderData.address1 || "", orderData.address2 || "",
+                    orderData.city || "", orderData.pincode || "", orderData.state || "",
+                    orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
+                    orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
+                    orderData.order_number || "", orderData.metal || "", orderData.category || "",
+                    orderData.subcategory || "", orderData.product_design_name || "", orderData.purity || null,
+                    orderData.gross_weight || 0, orderData.stone_weight || 0, orderData.stone_price || 0,
+                    orderData.weight_bw || 0, orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0,
+                    orderData.wastage_weight || 0, orderData.total_weight_aw || 0, orderData.rate || 0,
+                    orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
+                    orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
+                    orderData.total_price || 0, orderData.remarks || "", imageUrl, orderData.order_status || "",
+                ];
+
+                db.query(sql, values, (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                });
+            });
         });
+
+        await Promise.all(queries);
+        res.status(201).json({ message: "All orders added successfully", insertedRows: orders.length });
 
     } catch (error) {
         console.error("Error processing order:", error);
         res.status(400).json({ error: "Invalid request format", details: error.message });
     }
 });
+
+
+
+
 
 app.get("/api/orders", (req, res) => {
     const sql = "SELECT * FROM orders";
