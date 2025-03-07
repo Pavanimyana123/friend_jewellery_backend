@@ -365,6 +365,29 @@ app.put("/api/orders/status/:orderId", (req, res) => {
     });
 });
 
+app.put("/api/orders/cancel/:orderId", (req, res) => {
+    const { orderId } = req.params;
+
+    const sql = `
+        UPDATE orders 
+        SET order_status = 'Canceled' 
+        WHERE order_number = ?`;
+
+    db.query(sql, [orderId], (err, result) => {
+        if (err) {
+            console.error("Error canceling order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order canceled successfully" });
+    });
+});
+
+
 app.put("/api/orders/work-status/:orderId", (req, res) => {
     const { orderId } = req.params;
     const { work_status } = req.body;
