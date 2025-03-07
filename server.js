@@ -29,8 +29,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
-    // password: 'Bunny@123',
+    // password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -410,6 +410,31 @@ app.put("/api/orders/work-status/:orderId", (req, res) => {
         res.status(200).json({ message: "Work status updated successfully" });
     });
 });
+
+
+app.put("/api/orders/assign-status/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { assigned_status } = req.body;
+
+    const sql = `
+        UPDATE orders 
+        SET assigned_status = ? 
+        WHERE id = ?`;
+
+    db.query(sql, [assigned_status, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating work status:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Work status updated successfully" });
+    });
+});
+
 
 
 
