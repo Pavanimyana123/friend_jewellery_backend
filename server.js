@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const moment = require("moment");
 const multer = require("multer");
 const path = require("path");
+const nodemailer = require("nodemailer");
 const fs = require("fs");
 
 // Configure multer storage
@@ -29,8 +30,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
-    // password: 'Bunny@123',
+    // password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -43,7 +44,70 @@ db.connect((err) => {
     }
 });
 
+// Email transporter setup
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "solutionsitech845@gmail.com", // Use your email
+        pass: "yioq wuqy zofp jduj",  // Use an App Password if using Gmail
+    },
+});
+
 app.use('/uploads', express.static('uploads'));
+
+app.post("/add-account", (req, res) => {
+    const {
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card
+    } = req.body;
+
+    const password = `${account_name}@123`;
+
+    const sanitizeValue = (value) => (value === "" ? null : value);
+
+    const sql = `
+        INSERT INTO account_details (
+            account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+            phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
+            ifsc_code, branch, gst_in, aadhar_card, pan_card
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+        account_name, print_name, account_group, sanitizeValue(address1), sanitizeValue(address2),
+        sanitizeValue(city), sanitizeValue(pincode), sanitizeValue(state), sanitizeValue(state_code),
+        sanitizeValue(phone), sanitizeValue(mobile), sanitizeValue(email), password,
+        sanitizeValue(birthday), sanitizeValue(anniversary), sanitizeValue(bank_account_no),
+        sanitizeValue(bank_name), sanitizeValue(ifsc_code), sanitizeValue(branch),
+        sanitizeValue(gst_in), sanitizeValue(aadhar_card), sanitizeValue(pan_card)
+    ];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error inserting account details:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        // Prepare email
+        const mailOptions = {
+            from: "solutionsitech845@gmail.com",
+            to: email,
+            subject: "Account Successfully Created",
+            text: `Hello ${account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${email}\nPassword: ${password}\n\nBest Regards,\nNew Friend's Jewellery`,
+        };
+
+        // Send email notification
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error sending email:", error);
+                return res.status(500).json({ error: "Account created but email failed to send." });
+            }
+            res.status(201).json({ message: "Account added successfully! Email sent.", accountId: result.insertId });
+        });
+    });
+});
+
 
 app.post("/api/orders", upload.array("image"), async (req, res) => {
     try {
@@ -157,46 +221,6 @@ app.post("/login", (req, res) => {
             message: "Login Successful", 
             user 
         });
-    });
-});
-
-// POST API to create a new account
-app.post("/add-account", (req, res) => {
-    const {
-        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
-        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
-        ifsc_code, branch, gst_in, aadhar_card, pan_card
-    } = req.body;
-
-    // Set default password as account_name@123
-    const password = `${account_name}@123`;
-
-    // Convert empty string values to NULL
-    const sanitizeValue = (value) => (value === "" ? null : value);
-
-    const sql = `
-        INSERT INTO account_details (
-            account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
-            phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
-            ifsc_code, branch, gst_in, aadhar_card, pan_card
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const values = [
-        account_name, print_name, account_group, sanitizeValue(address1), sanitizeValue(address2),
-        sanitizeValue(city), sanitizeValue(pincode), sanitizeValue(state), sanitizeValue(state_code),
-        sanitizeValue(phone), sanitizeValue(mobile), sanitizeValue(email), password,
-        sanitizeValue(birthday), sanitizeValue(anniversary), sanitizeValue(bank_account_no),
-        sanitizeValue(bank_name), sanitizeValue(ifsc_code), sanitizeValue(branch),
-        sanitizeValue(gst_in), sanitizeValue(aadhar_card), sanitizeValue(pan_card)
-    ];
-
-    db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error("Error inserting account details:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-        res.status(201).json({ message: "Account added successfully!", accountId: result.insertId });
     });
 });
 

@@ -1,14 +1,32 @@
 const Account = require("../models/accountModel");
 const moment = require("moment");
+const transporter = require("../emailConfig");
 
-exports.addAccount = async (req, res) => {
-    try {
-        const accountId = await Account.createAccount(req.body);
-        res.status(201).json({ message: "Account added successfully!", accountId });
-    } catch (error) {
-        console.error("Error inserting account details:", error);
-        res.status(500).json({ error: "Database error" });
-    }
+exports.createAccount = (req, res) => {
+    const accountData = req.body;
+
+    Account.addAccount(accountData, (err, result) => {
+        if (err) {
+            console.error("Error inserting account details:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        // Email sending logic
+        const mailOptions = {
+            from: "solutionsitech845@gmail.com",
+            to: accountData.email,
+            subject: "Account Successfully Created",
+            text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${accountData.email}\nPassword: ${accountData.account_name}@123\n\nBest Regards,\nNew Friend's Jewellery`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error sending email:", error);
+                return res.status(500).json({ error: "Account created but email failed to send." });
+            }
+            res.status(201).json({ message: "Account added successfully! Email sent.", accountId: result.insertId });
+        });
+    });
 };
 
 exports.getAllAccounts = (req, res) => {

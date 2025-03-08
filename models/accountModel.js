@@ -1,40 +1,36 @@
 const db = require("../db");
 
-createAccount = (accountData) => {
-    return new Promise((resolve, reject) => {
-        const sql = `
-            INSERT INTO account_details (
-                account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
-                phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
-                ifsc_code, branch, gst_in, aadhar_card, pan_card
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+const addAccount = (accountData, callback) => {
+    const {
+        account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+        phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
+        ifsc_code, branch, gst_in, aadhar_card, pan_card
+    } = accountData;
 
-        const sanitizeValue = (value) => (value === "" ? null : value);
+    const password = `${account_name}@123`;
 
-        const values = [
-            accountData.account_name, accountData.print_name, accountData.account_group,
-            sanitizeValue(accountData.address1), sanitizeValue(accountData.address2),
-            sanitizeValue(accountData.city), sanitizeValue(accountData.pincode), 
-            sanitizeValue(accountData.state), sanitizeValue(accountData.state_code),
-            sanitizeValue(accountData.phone), sanitizeValue(accountData.mobile), 
-            sanitizeValue(accountData.email), `${accountData.account_name}@123`, // Default password
-            sanitizeValue(accountData.birthday), sanitizeValue(accountData.anniversary),
-            sanitizeValue(accountData.bank_account_no), sanitizeValue(accountData.bank_name),
-            sanitizeValue(accountData.ifsc_code), sanitizeValue(accountData.branch),
-            sanitizeValue(accountData.gst_in), sanitizeValue(accountData.aadhar_card),
-            sanitizeValue(accountData.pan_card)
-        ];
+    const sanitizeValue = (value) => (value === "" ? null : value);
 
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result.insertId);
-            }
-        });
-    });
+    const sql = `
+        INSERT INTO account_details (
+            account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
+            phone, mobile, email, password, birthday, anniversary, bank_account_no, bank_name,
+            ifsc_code, branch, gst_in, aadhar_card, pan_card
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+        account_name, print_name, account_group, sanitizeValue(address1), sanitizeValue(address2),
+        sanitizeValue(city), sanitizeValue(pincode), sanitizeValue(state), sanitizeValue(state_code),
+        sanitizeValue(phone), sanitizeValue(mobile), sanitizeValue(email), password,
+        sanitizeValue(birthday), sanitizeValue(anniversary), sanitizeValue(bank_account_no),
+        sanitizeValue(bank_name), sanitizeValue(ifsc_code), sanitizeValue(branch),
+        sanitizeValue(gst_in), sanitizeValue(aadhar_card), sanitizeValue(pan_card)
+    ];
+
+    db.query(sql, values, callback);
 };
+
 
 const getAll = (callback) => {
     const sql = "SELECT * FROM account_details";
@@ -80,4 +76,4 @@ const deleteAccount = (accountId, callback) => {
     db.query(sql, [accountId], callback);
 };
 
-module.exports = { createAccount, getAll, getById, updateAccountById,deleteAccount };
+module.exports = { addAccount, getAll, getById, updateAccountById,deleteAccount };
