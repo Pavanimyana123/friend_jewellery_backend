@@ -13,7 +13,7 @@ exports.createAccount = (req, res) => {
 
         // Email sending logic
         const mailOptions = {
-            from: "solutionsitech845@gmail.com",
+            from: "manitejavadnala@gmail.com",
             to: accountData.email,
             subject: "Account Successfully Created",
             text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${accountData.email}\nPassword: ${accountData.account_name}@123\n\nBest Regards,\nNew Friend's Jewellery`,
