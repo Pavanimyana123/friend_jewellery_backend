@@ -12,12 +12,14 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/uploads', express.static('uploads'));
 
 app.use("/", accountRoutes);
 app.use("/", stateRoutes);
 app.use("/", loginRoutes);
 app.use("/api", orderRoutes);
 app.use("/", rateRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

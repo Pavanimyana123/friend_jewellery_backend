@@ -29,8 +29,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    // password: 'Pavani@123',
-    password: 'Bunny@123',
+    password: 'Pavani@123',
+    // password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -387,7 +387,6 @@ app.put("/api/orders/cancel/:orderId", (req, res) => {
     });
 });
 
-
 app.put("/api/orders/work-status/:orderId", (req, res) => {
     const { orderId } = req.params;
     const { work_status } = req.body;
@@ -411,7 +410,6 @@ app.put("/api/orders/work-status/:orderId", (req, res) => {
     });
 });
 
-
 app.put("/api/orders/assign-status/:orderId", (req, res) => {
     const { orderId } = req.params;
     const { assigned_status } = req.body;
@@ -434,6 +432,31 @@ app.put("/api/orders/assign-status/:orderId", (req, res) => {
         res.status(200).json({ message: "Work status updated successfully" });
     });
 });
+
+// API to get the last order number
+app.get("/api/lastOrderNumber", (req, res) => {
+    const query = "SELECT order_number FROM orders WHERE order_number LIKE 'ORD%' ORDER BY id DESC";
+    
+    db.query(query, (err, result) => {
+      if (err) {
+        console.error("Error fetching last order number:", err);
+        return res.status(500).json({ error: "Failed to fetch last order number" });
+      }
+      
+      if (result.length > 0) {
+        const ordNumbers = result
+          .map(row => row.order_number)
+          .filter(order => order.startsWith("ORD"))
+          .map(order => parseInt(order.slice(3), 10));
+  
+        const lastOrderNumber = Math.max(...ordNumbers);
+        const nextOrderNumber = `ORD${String(lastOrderNumber + 1).padStart(3, "0")}`;
+        res.json({ lastOrderNumber: nextOrderNumber });
+      } else {
+        res.json({ lastOrderNumber: "ORD001" });
+      }
+    });
+  });
 
 
 
