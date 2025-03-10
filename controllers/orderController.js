@@ -55,14 +55,16 @@ const createOrder = async (req, res) => {
                     orderData.city || "", orderData.pincode || "", orderData.state || "",
                     orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
                     orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                    orderData.order_number || "", orderData.metal || "", orderData.category || "",
+                    orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date, 
+                    orderData.metal || "", orderData.category || "",
                     orderData.subcategory || "", orderData.product_design_name || "", orderData.purity || null,
                     orderData.gross_weight || 0, orderData.stone_weight || 0, orderData.stone_price || 0,
                     orderData.weight_bw || 0, orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0,
                     orderData.wastage_weight || 0, orderData.total_weight_aw || 0, orderData.rate || 0,
                     orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
                     orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
-                    orderData.total_price || 0, orderData.remarks || "", imageUrl, orderData.order_status || "", orderData.qty || "",
+                    orderData.total_price || 0, orderData.remarks || "",orderData.delivery_date === "" ? null : orderData.delivery_date,
+                    imageUrl, orderData.order_status || "", orderData.qty || "",
                 ];
 
                 OrderModel.createOrder(values, (err, result) => {

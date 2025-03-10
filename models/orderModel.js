@@ -8,11 +8,11 @@ const getLastOrderNumber = (callback) => {
 const createOrder = (orderData, callback) => {
     const sql = `INSERT INTO orders (
         account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-        aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
+        aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
         total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-        remarks, image_url, order_status, qty
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        remarks, delivery_date, image_url, order_status, qty
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     db.query(sql, orderData, callback);
 };
