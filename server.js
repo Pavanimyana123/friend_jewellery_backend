@@ -30,8 +30,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
-    // password: 'Bunny@123',
+    // password: 'Pavani@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -146,8 +146,8 @@ app.post("/api/orders", upload.array("image"), async (req, res) => {
                     aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
                     gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
                     total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-                    remarks, image_url, order_status, qty
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    remarks, image_url, order_status, qty, cancel_req_status, worker_comment
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 const values = [
                     orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
@@ -163,6 +163,7 @@ app.post("/api/orders", upload.array("image"), async (req, res) => {
                     orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
                     orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
                     orderData.total_price || 0, orderData.remarks || "", imageUrl, orderData.order_status || "", orderData.qty || "",
+                    orderData.cancel_req_status || "", orderData.worker_comment || "",
                 ];
 
                 db.query(sql, values, (err, result) => {
@@ -394,12 +395,12 @@ app.put("/api/orders/cancel/:orderId", (req, res) => {
 
     const sql = `
         UPDATE orders 
-        SET order_status = 'Canceled' 
-        WHERE order_number = ?`;
+        SET cancel_req_status = 'Pending' 
+        WHERE id = ?`;
 
     db.query(sql, [orderId], (err, result) => {
         if (err) {
-            console.error("Error canceling order:", err);
+            console.error("Error updating cancel request:", err);
             return res.status(500).json({ error: "Database error" });
         }
 
@@ -407,20 +408,58 @@ app.put("/api/orders/cancel/:orderId", (req, res) => {
             return res.status(404).json({ error: "Order not found" });
         }
 
-        res.status(200).json({ message: "Order canceled successfully" });
+        res.status(200).json({ message: "Order cancellation requested successfully" });
     });
 });
 
+app.put("/api/orders/cancel/handle/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { action } = req.body; // "Approved" or "Rejected"
+
+    let sql;
+    let values;
+
+    if (action === "Approved") {
+        sql = `
+            UPDATE orders 
+            SET order_status = 'Canceled', cancel_req_status = 'Approved'
+            WHERE id = ?`;
+        values = [orderId];
+    } else if (action === "Rejected") {
+        sql = `
+            UPDATE orders 
+            SET cancel_req_status = 'Rejected' 
+            WHERE id = ?`;
+        values = [orderId];
+    } else {
+        return res.status(400).json({ error: "Invalid action" });
+    }
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error updating cancel request:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: `Order cancellation ${action.toLowerCase()} successfully` });
+    });
+});
+
+
 app.put("/api/orders/work-status/:orderId", (req, res) => {
     const { orderId } = req.params;
-    const { work_status } = req.body;
+    const { work_status, worker_comment } = req.body;
 
     const sql = `
         UPDATE orders 
-        SET work_status = ? 
+        SET work_status = ?, worker_comment = ?
         WHERE id = ?`;
 
-    db.query(sql, [work_status, orderId], (err, result) => {
+    db.query(sql, [work_status, worker_comment, orderId], (err, result) => {
         if (err) {
             console.error("Error updating work status:", err);
             return res.status(500).json({ error: "Database error" });
