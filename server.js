@@ -143,11 +143,11 @@ app.post("/api/orders", upload.array("image"), async (req, res) => {
             return new Promise((resolve, reject) => {
                 const sql = `INSERT INTO orders (
                     account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-                    aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, purity, 
+                    aadhar_card, gst_in, pan_card, date, order_number, metal, category, subcategory, product_design_name, status, purity, 
                     gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
                     total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
                     remarks, image_url, order_status, qty, cancel_req_status, worker_comment
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 const values = [
                     orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
@@ -156,7 +156,7 @@ app.post("/api/orders", upload.array("image"), async (req, res) => {
                     orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
                     orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
                     orderData.order_number || "", orderData.metal || "", orderData.category || "",
-                    orderData.subcategory || "", orderData.product_design_name || "", orderData.purity || null,
+                    orderData.subcategory || "", orderData.product_design_name || "", orderData.status || "", orderData.purity || null,
                     orderData.gross_weight || 0, orderData.stone_weight || 0, orderData.stone_price || 0,
                     orderData.weight_bw || 0, orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0,
                     orderData.wastage_weight || 0, orderData.total_weight_aw || 0, orderData.rate || 0,
@@ -390,66 +390,6 @@ app.put("/api/orders/status/:orderId", (req, res) => {
     });
 });
 
-app.put("/api/orders/cancel/:orderId", (req, res) => {
-    const { orderId } = req.params;
-
-    const sql = `
-        UPDATE orders 
-        SET cancel_req_status = 'Pending' 
-        WHERE id = ?`;
-
-    db.query(sql, [orderId], (err, result) => {
-        if (err) {
-            console.error("Error updating cancel request:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Order not found" });
-        }
-
-        res.status(200).json({ message: "Order cancellation requested successfully" });
-    });
-});
-
-app.put("/api/orders/cancel/handle/:orderId", (req, res) => {
-    const { orderId } = req.params;
-    const { action } = req.body; // "Approved" or "Rejected"
-
-    let sql;
-    let values;
-
-    if (action === "Approved") {
-        sql = `
-            UPDATE orders 
-            SET order_status = 'Canceled', cancel_req_status = 'Approved'
-            WHERE id = ?`;
-        values = [orderId];
-    } else if (action === "Rejected") {
-        sql = `
-            UPDATE orders 
-            SET cancel_req_status = 'Rejected' 
-            WHERE id = ?`;
-        values = [orderId];
-    } else {
-        return res.status(400).json({ error: "Invalid action" });
-    }
-
-    db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error("Error updating cancel request:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Order not found" });
-        }
-
-        res.status(200).json({ message: `Order cancellation ${action.toLowerCase()} successfully` });
-    });
-});
-
-
 app.put("/api/orders/work-status/:orderId", (req, res) => {
     const { orderId } = req.params;
     const { work_status, worker_comment } = req.body;
@@ -522,8 +462,93 @@ app.get("/api/lastOrderNumber", (req, res) => {
   });
 
 
+  app.put("/api/orders/cancel/:orderId", (req, res) => {
+    const { orderId } = req.params;
 
+    const sql = `
+        UPDATE orders 
+        SET cancel_req_status = 'Pending' 
+        WHERE id = ?`;
 
+    db.query(sql, [orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating cancel request:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order cancellation requested successfully" });
+    });
+});
+
+app.put("/api/orders/cancel/handle/:orderId", (req, res) => {
+    const { orderId } = req.params;
+    const { action } = req.body; // "Approved" or "Rejected"
+
+    let sql;
+    let values;
+
+    if (action === "Approved") {
+        sql = `
+            UPDATE orders 
+            SET order_status = 'Canceled', cancel_req_status = 'Approved'
+            WHERE id = ?`;
+        values = [orderId];
+    } else if (action === "Rejected") {
+        sql = `
+            UPDATE orders 
+            SET cancel_req_status = 'Rejected' 
+            WHERE id = ?`;
+        values = [orderId];
+    } else {
+        return res.status(400).json({ error: "Invalid action" });
+    }
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error updating cancel request:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: `Order cancellation ${action.toLowerCase()} successfully` });
+    });
+});  
+
+app.post('/api/designs', (req, res) => {
+    const { order_id, account_name, requested_design_name, approve_status } = req.body;
+  
+    if (!order_id || !account_name || !requested_design_name) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+  
+    const sql = 'INSERT INTO designs (order_id, account_name, requested_design_name, approve_status) VALUES (?, ?, ?, ?)';
+    db.query(sql, [order_id, account_name, requested_design_name, approve_status], (err, result) => {
+      if (err) {
+        console.error('Error inserting data:', err);
+        return res.status(500).json({ message: 'Database error' });
+      }
+      res.status(201).json({ message: 'Design change request submitted successfully!' });
+    });
+  });
+
+  app.get("/api/designs", (req, res) => {
+    const sql = "SELECT * FROM designs";
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching accounts:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json(results);
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
