@@ -35,10 +35,10 @@ const updateOrderStatus = (orderId, order_status, callback) => {
   db.query(sql, [order_status, orderId], callback);
 };
 
-const cancelOrder = (orderId, callback) => {
-  const sql = `UPDATE orders SET order_status = 'Canceled' WHERE order_number = ?`;
-  db.query(sql, [orderId], callback);
-};
+// const cancelOrder = (orderId, callback) => {
+//   const sql = `UPDATE orders SET order_status = 'Canceled' WHERE order_number = ?`;
+//   db.query(sql, [orderId], callback);
+// };
 
 const updateWorkStatus = (orderId, work_status, callback) => {
   const sql = `UPDATE orders SET work_status = ? WHERE id = ?`;
@@ -50,13 +50,32 @@ const updateAssignedStatus = (orderId, assigned_status, callback) => {
   db.query(sql, [assigned_status, orderId], callback);
 };
 
+const requestCancel = (orderId, callback) => {
+  const sql = `UPDATE orders SET cancel_req_status = 'Pending' WHERE id = ?`;
+  db.query(sql, [orderId], callback);
+};
+
+const handleCancelRequest = (orderId, action, callback) => {
+  let sql;
+  if (action === "Approved") {
+      sql = `UPDATE orders SET order_status = 'Canceled', cancel_req_status = 'Approved' WHERE id = ?`;
+  } else if (action === "Rejected") {
+      sql = `UPDATE orders SET cancel_req_status = 'Rejected' WHERE id = ?`;
+  } else {
+      return callback(new Error("Invalid action"), null);
+  }
+  db.query(sql, [orderId], callback);
+};
+
 module.exports = {
     getLastOrderNumber,
     createOrder,
     getAllOrders,
     updateOrderAssignment,
     updateOrderStatus,
-    cancelOrder,
+    // cancelOrder,
     updateWorkStatus,
-    updateAssignedStatus
+    updateAssignedStatus,
+    requestCancel,
+    handleCancelRequest
 };
