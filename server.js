@@ -30,8 +30,8 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    // password: 'Pavani@123',
-    password: 'Bunny@123',
+    password: 'Pavani@123',
+    // password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -550,7 +550,6 @@ app.post('/api/designs', (req, res) => {
     });
 });
 
-
 app.put("/api/designs/:id/approve-status", (req, res) => {
     const { id } = req.params;
     const { approve_status } = req.body;
@@ -564,26 +563,73 @@ app.put("/api/designs/:id/approve-status", (req, res) => {
             return res.status(500).json({ error: "Database error" });
         }
 
-        // If approved, update the corresponding order status
         if (approve_status === "Approved") {
-            const updateOrderSql = `
-                UPDATE orders 
-                SET status = 'Modified Order' 
-                WHERE id = (SELECT order_id FROM designs WHERE id = ?)
+            // First, fetch the order details and requested_design_name
+            const fetchOrderSql = `
+                SELECT orders.*, designs.requested_design_name 
+                FROM orders 
+                JOIN designs ON orders.id = designs.order_id 
+                WHERE designs.id = ?
             `;
 
-            db.query(updateOrderSql, [id], (orderErr, orderResult) => {
-                if (orderErr) {
-                    console.error("Error updating order status:", orderErr);
-                    return res.status(500).json({ error: "Database error while updating order status" });
+            db.query(fetchOrderSql, [id], (fetchErr, orders) => {
+                if (fetchErr) {
+                    console.error("Error fetching order details:", fetchErr);
+                    return res.status(500).json({ error: "Database error while fetching order details" });
                 }
-                res.status(200).json({ message: "Approve status updated, Order status modified" });
+
+                if (orders.length === 0) {
+                    return res.status(404).json({ error: "Order not found" });
+                }
+
+                const order = orders[0]; // Get the fetched order details
+                
+                // Update the existing order's status to 'Modified Order'
+                const updateOrderSql = "UPDATE orders SET status = 'Modified Order' WHERE id = ?";
+                
+                db.query(updateOrderSql, [order.id], (orderErr) => {
+                    if (orderErr) {
+                        console.error("Error updating order status:", orderErr);
+                        return res.status(500).json({ error: "Database error while updating order status" });
+                    }
+
+                    const insertOrderSql = `
+                        INSERT INTO orders 
+                        (account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+                        aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, status, purity, 
+                        gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+                        total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+                        remarks, delivery_date, image_url, order_status, qty) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `;
+
+                    const newOrderValues = [
+                        order.account_id, order.mobile, order.account_name, order.email, order.address1, order.address2,
+                        order.city, order.pincode, order.state, order.state_code, order.aadhar_card, order.gst_in, order.pan_card,
+                        order.date, order.order_number, order.estimated_delivery_date, order.metal, order.category, order.subcategory, order.requested_design_name, // Use requested_design_name
+                        "Actual Order", order.purity, order.gross_weight, order.stone_weight, order.stone_price, order.weight_bw,
+                        order.wastage_on, order.wastage_percentage, order.wastage_weight, order.total_weight_aw, order.rate, order.amount,
+                        order.mc_on, order.mc_percentage, order.total_mc, order.tax_percentage, order.tax_amount, order.total_price,
+                        order.remarks, order.delivery_date, order.image_url, order.order_status, order.qty
+                    ];
+
+                    db.query(insertOrderSql, newOrderValues, (insertErr) => {
+                        if (insertErr) {
+                            console.error("Error inserting new order:", insertErr);
+                            return res.status(500).json({ error: "Database error while inserting new order" });
+                        }
+
+                        res.status(200).json({ message: "Approve status updated, Order status modified, and new Actual Order created" });
+                    });
+                });
             });
         } else {
             res.status(200).json({ message: "Approve status updated successfully" });
         }
     });
 });
+
+
 
 
 

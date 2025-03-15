@@ -27,5 +27,6 @@ router.put("/orders/work-status/:orderId", orderController.updateWorkStatus);
 router.put("/orders/assign-status/:orderId", orderController.updateAssignedStatus);
 router.put("/orders/:orderId", orderController.requestCancel);
 router.put("/orders/handle/:orderId", orderController.handleCancelRequest);
+router.put("/designs/:id/approve-status", orderController.updateApproveStatus);
 
 module.exports = router;
