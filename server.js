@@ -550,6 +550,43 @@ app.post('/api/designs', (req, res) => {
     });
 });
 
+
+app.put("/api/designs/:id/approve-status", (req, res) => {
+    const { id } = req.params;
+    const { approve_status } = req.body;
+
+    // SQL query to update approve_status in designs table
+    const updateDesignSql = "UPDATE designs SET approve_status = ? WHERE id = ?";
+
+    db.query(updateDesignSql, [approve_status, id], (err, result) => {
+        if (err) {
+            console.error("Error updating approve status:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        // If approved, update the corresponding order status
+        if (approve_status === "Approved") {
+            const updateOrderSql = `
+                UPDATE orders 
+                SET status = 'Modified Order' 
+                WHERE id = (SELECT order_id FROM designs WHERE id = ?)
+            `;
+
+            db.query(updateOrderSql, [id], (orderErr, orderResult) => {
+                if (orderErr) {
+                    console.error("Error updating order status:", orderErr);
+                    return res.status(500).json({ error: "Database error while updating order status" });
+                }
+                res.status(200).json({ message: "Approve status updated, Order status modified" });
+            });
+        } else {
+            res.status(200).json({ message: "Approve status updated successfully" });
+        }
+    });
+});
+
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
