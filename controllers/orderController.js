@@ -125,20 +125,20 @@ const updateStatus = (req, res) => {
     });
 };
 
-const cancelOrder = (req, res) => {
-    const { orderId } = req.params;
+// const cancelOrder = (req, res) => {
+//     const { orderId } = req.params;
 
-    OrderModel.cancelOrder(orderId, (err, result) => {
-        if (err) {
-            console.error("Error canceling order:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Order not found" });
-        }
-        res.status(200).json({ message: "Order canceled successfully" });
-    });
-};
+//     OrderModel.cancelOrder(orderId, (err, result) => {
+//         if (err) {
+//             console.error("Error canceling order:", err);
+//             return res.status(500).json({ error: "Database error" });
+//         }
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ error: "Order not found" });
+//         }
+//         res.status(200).json({ message: "Order canceled successfully" });
+//     });
+// };
 
 const updateWorkStatus = (req, res) => {
     const { orderId } = req.params;
@@ -172,13 +172,96 @@ const updateAssignedStatus = (req, res) => {
     });
 };
 
+const requestCancel = (req, res) => {
+    const { orderId } = req.params;
+
+    OrderModel.requestCancel(orderId, (err, result) => {
+        if (err) {
+            console.error("Error updating cancel request:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order cancellation requested successfully" });
+    });
+};
+
+const handleCancelRequest = (req, res) => {
+    const { orderId } = req.params;
+    const { action } = req.body; // "Approved" or "Rejected"
+
+    OrderModel.handleCancelRequest(orderId, action, (err, result) => {
+        if (err) {
+            console.error("Error updating cancel request:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: `Order cancellation ${action.toLowerCase()} successfully` });
+    });
+};
+
+const updateApproveStatus = (req, res) => {
+    const { id } = req.params;
+    const { approve_status } = req.body;
+
+    OrderModel.updateDesignApproveStatus(id, approve_status, (err, result) => {
+        if (err) {
+            console.error("Error updating approve status:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (approve_status === "Approved") {
+            OrderModel.fetchOrderAndDesign(id, (fetchErr, orders) => {
+                if (fetchErr) {
+                    console.error("Error fetching order details:", fetchErr);
+                    return res.status(500).json({ error: "Database error while fetching order details" });
+                }
+
+                if (orders.length === 0) {
+                    return res.status(404).json({ error: "Order not found" });
+                }
+
+                const order = orders[0]; // Get the fetched order details
+
+                OrderModel.updateStatus(order.id, (orderErr) => {
+                    if (orderErr) {
+                        console.error("Error updating order status:", orderErr);
+                        return res.status(500).json({ error: "Database error while updating order status" });
+                    }
+
+                    OrderModel.insertNewOrder(order, (insertErr) => {
+                        if (insertErr) {
+                            console.error("Error inserting new order:", insertErr);
+                            return res.status(500).json({ error: "Database error while inserting new order" });
+                        }
+
+                        res.status(200).json({ message: "Approve status updated, Order status modified, and new Actual Order created" });
+                    });
+                });
+            });
+        } else {
+            res.status(200).json({ message: "Approve status updated successfully" });
+        }
+    });
+};
+
 module.exports = { 
     getLastOrderNumber, 
     createOrder, 
     getAllOrders,
     assignOrder,
     updateStatus,
-    cancelOrder,
+    // cancelOrder,
     updateWorkStatus,
-    updateAssignedStatus
+    updateAssignedStatus,
+    requestCancel,
+    handleCancelRequest,
+    updateApproveStatus
 };

@@ -6,6 +6,7 @@ const stateRoutes = require("./routes/stateRoutes");
 const loginRoutes = require("./routes/loginRoutes");
 const orderRoutes = require("./routes/orderRoute");
 const rateRoutes = require("./routes/ratesRoute");
+const designRoutes = require("./routes/designRoutes");
 
 const app = express();
 const PORT = 5000;
@@ -19,6 +20,7 @@ app.use("/", stateRoutes);
 app.use("/", loginRoutes);
 app.use("/api", orderRoutes);
 app.use("/", rateRoutes);
+app.use("/api", designRoutes);
 
 
 app.listen(PORT, () => {

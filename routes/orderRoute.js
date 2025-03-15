@@ -22,8 +22,11 @@ router.post("/orders", upload.array("image"), orderController.createOrder);
 router.get("/orders", orderController.getAllOrders);
 router.put("/orders/assign/:orderId", orderController.assignOrder);
 router.put("/orders/status/:orderId", orderController.updateStatus);
-router.put("/orders/cancel/:orderId", orderController.cancelOrder);
+// router.put("/orders/cancel/:orderId", orderController.cancelOrder);
 router.put("/orders/work-status/:orderId", orderController.updateWorkStatus);
 router.put("/orders/assign-status/:orderId", orderController.updateAssignedStatus);
+router.put("/orders/:orderId", orderController.requestCancel);
+router.put("/orders/handle/:orderId", orderController.handleCancelRequest);
+router.put("/designs/:id/approve-status", orderController.updateApproveStatus);
 
 module.exports = router;
