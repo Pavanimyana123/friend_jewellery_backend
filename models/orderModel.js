@@ -72,7 +72,6 @@ const updateDesignApproveStatus = (designId, approve_status, callback) => {
   db.query(sql, [approve_status, designId], callback);
 };
 
-// Fetch order details and requested_design_name from designs
 const fetchOrderAndDesign = (designId, callback) => {
   const sql = `
       SELECT orders.*, designs.requested_design_name 
@@ -83,7 +82,6 @@ const fetchOrderAndDesign = (designId, callback) => {
   db.query(sql, [designId], callback);
 };
 
-// Update the existing order's status to 'Modified Order'
 const updateStatus = (orderId, callback) => {
   const sql = "UPDATE orders SET status = 'Modified Order' WHERE id = ?";
   db.query(sql, [orderId], callback);

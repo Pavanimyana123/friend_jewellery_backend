@@ -64,7 +64,7 @@ const createOrder = async (req, res) => {
                     orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
                     orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
                     orderData.total_price || 0, orderData.remarks || "",orderData.delivery_date === "" ? null : orderData.delivery_date,
-                    imageUrl, orderData.order_status || "", orderData.qty || "",
+                    imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
                 ];
 
                 OrderModel.createOrder(values, (err, result) => {
