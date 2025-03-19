@@ -1,12 +1,12 @@
 const db = require("../db");
 
 const getLastOrderNumber = (callback) => {
-    const query = "SELECT order_number FROM orders WHERE order_number LIKE 'ORD%' ORDER BY id DESC";
-    db.query(query, callback);
+  const query = "SELECT order_number FROM orders WHERE order_number LIKE 'ORD%' ORDER BY id DESC";
+  db.query(query, callback);
 };
 
 const createOrder = (orderData, callback) => {
-    const sql = `INSERT INTO orders (
+  const sql = `INSERT INTO orders (
         account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
         aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
@@ -14,12 +14,12 @@ const createOrder = (orderData, callback) => {
         remarks, delivery_date, image_url, order_status, qty, status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    db.query(sql, orderData, callback);
+  db.query(sql, orderData, callback);
 };
 
 const getAllOrders = (callback) => {
-    const sql = "SELECT * FROM orders";
-    db.query(sql, callback);
+  const sql = "SELECT * FROM orders";
+  db.query(sql, callback);
 };
 
 const updateOrderAssignment = (orderId, assigned_status, worker_id, worker_name, work_status, callback) => {
@@ -58,11 +58,11 @@ const requestCancel = (orderId, callback) => {
 const handleCancelRequest = (orderId, action, callback) => {
   let sql;
   if (action === "Approved") {
-      sql = `UPDATE orders SET order_status = 'Canceled', cancel_req_status = 'Approved' WHERE id = ?`;
+    sql = `UPDATE orders SET order_status = 'Canceled', cancel_req_status = 'Approved' WHERE id = ?`;
   } else if (action === "Rejected") {
-      sql = `UPDATE orders SET cancel_req_status = 'Rejected' WHERE id = ?`;
+    sql = `UPDATE orders SET cancel_req_status = 'Rejected' WHERE id = ?`;
   } else {
-      return callback(new Error("Invalid action"), null);
+    return callback(new Error("Invalid action"), null);
   }
   db.query(sql, [orderId], callback);
 };
@@ -100,32 +100,44 @@ const insertNewOrder = (order, callback) => {
   `;
 
   const values = [
-      order.account_id, order.mobile, order.account_name, order.email, order.address1, order.address2,
-      order.city, order.pincode, order.state, order.state_code, order.aadhar_card, order.gst_in, order.pan_card,
-      order.date, order.order_number, order.estimated_delivery_date, order.metal, order.category, order.subcategory, 
-      order.requested_design_name, // Use requested_design_name instead of product_design_name
-      "Actual Order", order.purity, order.gross_weight, order.stone_weight, order.stone_price, order.weight_bw,
-      order.wastage_on, order.wastage_percentage, order.wastage_weight, order.total_weight_aw, order.rate, order.amount,
-      order.mc_on, order.mc_percentage, order.total_mc, order.tax_percentage, order.tax_amount, order.total_price,
-      order.remarks, order.delivery_date, order.image_url, order.order_status, order.qty
+    order.account_id, order.mobile, order.account_name, order.email, order.address1, order.address2,
+    order.city, order.pincode, order.state, order.state_code, order.aadhar_card, order.gst_in, order.pan_card,
+    order.date, order.order_number, order.estimated_delivery_date, order.metal, order.category, order.subcategory,
+    order.requested_design_name, // Use requested_design_name instead of product_design_name
+    "Actual Order", order.purity, order.gross_weight, order.stone_weight, order.stone_price, order.weight_bw,
+    order.wastage_on, order.wastage_percentage, order.wastage_weight, order.total_weight_aw, order.rate, order.amount,
+    order.mc_on, order.mc_percentage, order.total_mc, order.tax_percentage, order.tax_amount, order.total_price,
+    order.remarks, order.delivery_date, order.image_url, order.order_status, order.qty
   ];
 
   db.query(sql, values, callback);
 };
 
+const deleteOrderById = (orderId, callback) => {
+  const sql = "DELETE FROM orders WHERE id = ?";
+  db.query(sql, [orderId], (err, result) => {
+    if (err) {
+      return callback(err, null);
+    }
+    callback(null, result);
+  });
+};
+
+
 module.exports = {
-    getLastOrderNumber,
-    createOrder,
-    getAllOrders,
-    updateOrderAssignment,
-    updateOrderStatus,
-    // cancelOrder,
-    updateWorkStatus,
-    updateAssignedStatus,
-    requestCancel,
-    handleCancelRequest,
-    updateDesignApproveStatus,
-    fetchOrderAndDesign,
-    updateStatus,
-    insertNewOrder
+  getLastOrderNumber,
+  createOrder,
+  getAllOrders,
+  updateOrderAssignment,
+  updateOrderStatus,
+  // cancelOrder,
+  updateWorkStatus,
+  updateAssignedStatus,
+  requestCancel,
+  handleCancelRequest,
+  updateDesignApproveStatus,
+  fetchOrderAndDesign,
+  updateStatus,
+  insertNewOrder,
+  deleteOrderById
 };

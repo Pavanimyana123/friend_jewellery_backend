@@ -37,5 +37,6 @@ router.put("/orders/assign-status/:orderId", orderController.updateAssignedStatu
 router.put("/orders/cancel/:orderId", orderController.requestCancel);
 router.put("/orders/cancel/handle/:orderId", orderController.handleCancelRequest);
 router.put("/designs/:id/approve-status", orderController.updateApproveStatus);
+router.delete("/delete-order/:id", orderController.deleteOrder);
 
 module.exports = router;

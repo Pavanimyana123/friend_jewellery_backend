@@ -252,6 +252,21 @@ const updateApproveStatus = (req, res) => {
     });
 };
 
+const deleteOrder = (req, res) => {
+    const orderId = req.params.id;
+
+    OrderModel.deleteOrderById(orderId, (err, result) => {
+        if (err) {
+            console.error("Error deleting order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        res.status(200).json({ message: "Order deleted successfully!" });
+    });
+};
+
 module.exports = { 
     getLastOrderNumber, 
     createOrder, 
@@ -263,5 +278,6 @@ module.exports = {
     updateAssignedStatus,
     requestCancel,
     handleCancelRequest,
-    updateApproveStatus
+    updateApproveStatus,
+    deleteOrder
 };

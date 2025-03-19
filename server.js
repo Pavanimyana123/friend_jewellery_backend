@@ -631,8 +631,22 @@ app.put("/api/designs/:id/approve-status", (req, res) => {
     });
 });
 
+app.delete("/delete-order/:id", (req, res) => {
+    const orderId = req.params.id;
 
+    const sql = "DELETE FROM orders WHERE id = ?";
 
+    db.query(sql, [orderId], (err, result) => {
+        if (err) {
+            console.error("Error deleting order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        res.status(200).json({ message: "Order deleted successfully!" });
+    });
+});
 
 
 app.listen(PORT, () => {
