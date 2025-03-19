@@ -295,6 +295,78 @@ app.put("/update-account/:id", (req, res) => {
     });
 });
 
+app.get("/api/orders/:id", (req, res) => {
+    const orderId = req.params.id;
+    const sql = "SELECT * FROM orders WHERE id = ?";
+
+    db.query(sql, [orderId], (err, result) => {
+        if (err) {
+            console.error("Error fetching order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json(result[0]); // Send the first result as an object
+    });
+});
+
+app.put("/api/orders/:id", (req, res) => {
+    const orderId = Number(req.params.id); // Convert to number
+    const orderData = req.body;
+    console.log("orderdata=", req.body);
+
+    if (!orderId) {
+        return res.status(400).json({ error: "Invalid order ID" });
+    }
+
+    if (!Object.keys(orderData).length) {
+        return res.status(400).json({ error: "Empty request body" });
+    }
+
+    const sql = `UPDATE orders SET 
+        account_id = ?, mobile = ?, account_name = ?, email = ?, address1 = ?, address2 = ?, city = ?, pincode = ?, state = ?, state_code = ?, 
+        aadhar_card = ?, gst_in = ?, pan_card = ?, date = ?, order_number = ?, metal = ?, category = ?, subcategory = ?, product_design_name = ?, status = ?, purity = ?, 
+        gross_weight = ?, stone_weight = ?, stone_price = ?, weight_bw = ?, wastage_on = ?, wastage_percentage = ?, wastage_weight = ?, 
+        total_weight_aw = ?, rate = ?, amount = ?, mc_on = ?, mc_percentage = ?, total_mc = ?, tax_percentage = ?, tax_amount = ?, total_price = ?, 
+        remarks = ?, order_status = ?, qty = ? 
+        WHERE id = ?`;
+
+    const values = [
+        orderData.account_id || null, orderData.mobile || null, orderData.account_name || "", 
+        orderData.email || "", orderData.address1 || "", orderData.address2 || "", 
+        orderData.city || "", orderData.pincode || "", orderData.state || "", orderData.state_code || "", 
+        orderData.aadhar_card || "", orderData.gst_in || "", orderData.pan_card || "", 
+        orderData.date || "", orderData.order_number || "", orderData.metal || "", 
+        orderData.category || "", orderData.subcategory || "", orderData.product_design_name || "", 
+        orderData.status || "", orderData.purity || "", orderData.gross_weight || 0, 
+        orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0, 
+        orderData.wastage_on || "", orderData.wastage_percentage || 0, orderData.wastage_weight || 0, 
+        orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0, 
+        orderData.mc_on || "", orderData.mc_percentage || 0, orderData.total_mc || 0, 
+        orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0, 
+        orderData.remarks || "", orderData.order_status || "", orderData.qty || 0, 
+        orderId
+    ];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Error updating order:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json({ message: "Order updated successfully" });
+    });
+});
+
+
+
 app.delete("/delete-account/:id", (req, res) => {
     const accountId = req.params.id;
 
