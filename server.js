@@ -19,21 +19,27 @@ const storage = multer.diskStorage({
 });
 
 
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB file size limit
+});
+
 
 const app = express();
 const PORT = 5000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+
 
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    // password: 'Pavani@123',
+    password: 'Pavani@123',
     // password: 'Bharath@123',
 
-    password: 'Bunny@123',
+    // password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -313,57 +319,138 @@ app.get("/api/orders/:id", (req, res) => {
     });
 });
 
-app.put("/api/orders/:id", (req, res) => {
-    const orderId = Number(req.params.id); // Convert to number
-    const orderData = req.body;
-    console.log("orderdata=", req.body);
+// app.put("/api/orders/:id", (req, res) => {
+//     const orderId = Number(req.params.id); // Convert to number
+//     const orderData = req.body;
+//     console.log("orderdata=", req.body);
 
-    if (!orderId) {
-        return res.status(400).json({ error: "Invalid order ID" });
-    }
+//     if (!orderId) {
+//         return res.status(400).json({ error: "Invalid order ID" });
+//     }
 
-    if (!Object.keys(orderData).length) {
-        return res.status(400).json({ error: "Empty request body" });
-    }
+//     if (!Object.keys(orderData).length) {
+//         return res.status(400).json({ error: "Empty request body" });
+//     }
 
-    const sql = `UPDATE orders SET 
-        account_id = ?, mobile = ?, account_name = ?, email = ?, address1 = ?, address2 = ?, city = ?, pincode = ?, state = ?, state_code = ?, 
-        aadhar_card = ?, gst_in = ?, pan_card = ?, date = ?, order_number = ?, metal = ?, category = ?, subcategory = ?, product_design_name = ?, status = ?, purity = ?, 
-        gross_weight = ?, stone_weight = ?, stone_price = ?, weight_bw = ?, wastage_on = ?, wastage_percentage = ?, wastage_weight = ?, 
-        total_weight_aw = ?, rate = ?, amount = ?, mc_on = ?, mc_percentage = ?, total_mc = ?, tax_percentage = ?, tax_amount = ?, total_price = ?, 
-        remarks = ?, order_status = ?, qty = ? 
-        WHERE id = ?`;
+//     const sql = `UPDATE orders SET 
+//         account_id = ?, mobile = ?, account_name = ?, email = ?, address1 = ?, address2 = ?, city = ?, pincode = ?, state = ?, state_code = ?, 
+//         aadhar_card = ?, gst_in = ?, pan_card = ?, date = ?, order_number = ?, metal = ?, category = ?, subcategory = ?, product_design_name = ?, status = ?, purity = ?, 
+//         gross_weight = ?, stone_weight = ?, stone_price = ?, weight_bw = ?, wastage_on = ?, wastage_percentage = ?, wastage_weight = ?, 
+//         total_weight_aw = ?, rate = ?, amount = ?, mc_on = ?, mc_percentage = ?, total_mc = ?, tax_percentage = ?, tax_amount = ?, total_price = ?, 
+//         remarks = ?, order_status = ?, qty = ? 
+//         WHERE id = ?`;
 
-    const values = [
-        orderData.account_id || null, orderData.mobile || null, orderData.account_name || "", 
-        orderData.email || "", orderData.address1 || "", orderData.address2 || "", 
-        orderData.city || "", orderData.pincode || "", orderData.state || "", orderData.state_code || "", 
-        orderData.aadhar_card || "", orderData.gst_in || "", orderData.pan_card || "", 
-        orderData.date || "", orderData.order_number || "", orderData.metal || "", 
-        orderData.category || "", orderData.subcategory || "", orderData.product_design_name || "", 
-        orderData.status || "", orderData.purity || "", orderData.gross_weight || 0, 
-        orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0, 
-        orderData.wastage_on || "", orderData.wastage_percentage || 0, orderData.wastage_weight || 0, 
-        orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0, 
-        orderData.mc_on || "", orderData.mc_percentage || 0, orderData.total_mc || 0, 
-        orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0, 
-        orderData.remarks || "", orderData.order_status || "", orderData.qty || 0, 
-        orderId
-    ];
+//     const values = [
+//         orderData.account_id || null, orderData.mobile || null, orderData.account_name || "", 
+//         orderData.email || "", orderData.address1 || "", orderData.address2 || "", 
+//         orderData.city || "", orderData.pincode || "", orderData.state || "", orderData.state_code || "", 
+//         orderData.aadhar_card || "", orderData.gst_in || "", orderData.pan_card || "", 
+//         orderData.date || "", orderData.order_number || "", orderData.metal || "", 
+//         orderData.category || "", orderData.subcategory || "", orderData.product_design_name || "", 
+//         orderData.status || "", orderData.purity || "", orderData.gross_weight || 0, 
+//         orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0, 
+//         orderData.wastage_on || "", orderData.wastage_percentage || 0, orderData.wastage_weight || 0, 
+//         orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0, 
+//         orderData.mc_on || "", orderData.mc_percentage || 0, orderData.total_mc || 0, 
+//         orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0, 
+//         orderData.remarks || "", orderData.order_status || "", orderData.qty || 0, 
+//         orderId
+//     ];
 
-    db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error("Error updating order:", err);
-            return res.status(500).json({ error: "Database error" });
+//     db.query(sql, values, (err, result) => {
+//         if (err) {
+//             console.error("Error updating order:", err);
+//             return res.status(500).json({ error: "Database error" });
+//         }
+
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ error: "Order not found" });
+//         }
+
+//         res.status(200).json({ message: "Order updated successfully" });
+//     });
+// });
+
+
+app.put("/api/orders/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        let updatedOrder = { ...req.body };
+
+        // console.log("Requested order =", updatedOrder);
+
+        // Remove imagePreview since it's not a column in the database
+        delete updatedOrder.imagePreview;
+
+        let imageUrl = null;
+        let imageFile = req.files?.image; // If using Multer
+
+        // Function to format date for MySQL
+        const formatDateForMySQL = (dateString) => {
+            if (!dateString) return null; // If date is null, return null
+            return moment(dateString).format("YYYY-MM-DD HH:mm:ss");
+        };
+
+        // Convert date fields before updating DB
+        if (updatedOrder.date) {
+            updatedOrder.date = formatDateForMySQL(updatedOrder.date);
+        }
+        if (updatedOrder.estimated_delivery_date) {
+            updatedOrder.estimated_delivery_date = formatDateForMySQL(updatedOrder.estimated_delivery_date);
+        }
+        if (updatedOrder.delivery_date) {
+            updatedOrder.delivery_date = formatDateForMySQL(updatedOrder.delivery_date);
+        }
+        if (updatedOrder.created_at) {
+            updatedOrder.created_at = formatDateForMySQL(updatedOrder.created_at);
+        }
+        if (updatedOrder.updated_at) {
+            updatedOrder.updated_at = formatDateForMySQL(updatedOrder.updated_at);
         }
 
+        // Handle Base64 Image Conversion
+        if (req.body.imagePreview && req.body.imagePreview.startsWith("data:image")) {
+            const base64Data = req.body.imagePreview.replace(/^data:image\/\w+;base64,/, "");
+            const imageBuffer = Buffer.from(base64Data, "base64");
+            const imageName = `uploads/${Date.now()}.png`;
+
+            fs.writeFileSync(imageName, imageBuffer); // Save file
+            imageUrl = `/${imageName}`; // Store path for DB
+        } 
+        // If file is uploaded via FormData
+        else if (imageFile) {
+            imageUrl = `/uploads/${imageFile.filename}`;
+        }
+
+        // If an image was processed, update its URL in the database
+        if (imageUrl) {
+            updatedOrder.image_url = imageUrl;
+        }
+
+        // Construct SET clause dynamically
+        const fields = Object.keys(updatedOrder).map(field => `${field} = ?`).join(", ");
+        const values = Object.values(updatedOrder);
+
+        const query = `UPDATE orders SET ${fields} WHERE id = ?`;
+
+        // Execute query with values using `db.promise()`
+        const [result] = await db.promise().execute(query, [...values, id]);
+
+        // Check if update was successful
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Order not found" });
+            return res.status(404).json({ error: "Order not found or no changes made" });
         }
 
-        res.status(200).json({ message: "Order updated successfully" });
-    });
+        res.status(200).json({ message: "Order updated successfully", imageUrl });
+    } catch (error) {
+        console.error("Error updating order:", error);
+        res.status(500).json({ error: "Failed to update order" });
+    }
 });
+
+
+
+
 
 
 
