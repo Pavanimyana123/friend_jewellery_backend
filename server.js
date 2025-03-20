@@ -36,10 +36,10 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    // password: 'Pavani@123',
+    password: 'Pavani@123',
     // password: 'Bharath@123',
 
-    password: 'Bunny@123',
+    // password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
@@ -142,7 +142,7 @@ app.post("/api/orders", upload.array("image"), async (req, res) => {
 
                 fs.writeFileSync(imageName, imageBuffer); // Save file
                 imageUrl = `/${imageName}`; // Store path for DB
-            } 
+            }
             // If file is uploaded via FormData
             else if (imageFile) {
                 imageUrl = `/uploads/${imageFile.filename}`;
@@ -226,9 +226,9 @@ app.post("/login", (req, res) => {
         // Remove password from response
         delete user.password;
 
-        res.status(200).json({ 
-            message: "Login Successful", 
-            user 
+        res.status(200).json({
+            message: "Login Successful",
+            user
         });
     });
 });
@@ -301,7 +301,7 @@ app.put("/update-account/:id", (req, res) => {
     });
 });
 
-app.get("/api/orders/:id", (req, res) => {
+app.get("/api/getorder/:id", (req, res) => {
     const orderId = req.params.id;
     const sql = "SELECT * FROM orders WHERE id = ?";
 
@@ -372,7 +372,7 @@ app.get("/api/orders/:id", (req, res) => {
 // });
 
 
-app.put("/api/orders/:id", async (req, res) => {
+app.put("/api/updateorders/:id", async (req, res) => {
     try {
         const { id } = req.params;
         let updatedOrder = { ...req.body };
@@ -416,7 +416,7 @@ app.put("/api/orders/:id", async (req, res) => {
 
             fs.writeFileSync(imageName, imageBuffer); // Save file
             imageUrl = `/${imageName}`; // Store path for DB
-        } 
+        }
         // If file is uploaded via FormData
         else if (imageFile) {
             imageUrl = `/uploads/${imageFile.filename}`;
@@ -594,30 +594,30 @@ app.put("/api/orders/assign-status/:orderId", (req, res) => {
 // API to get the last order number
 app.get("/api/lastOrderNumber", (req, res) => {
     const query = "SELECT order_number FROM orders WHERE order_number LIKE 'ORD%' ORDER BY id DESC";
-    
+
     db.query(query, (err, result) => {
-      if (err) {
-        console.error("Error fetching last order number:", err);
-        return res.status(500).json({ error: "Failed to fetch last order number" });
-      }
-      
-      if (result.length > 0) {
-        const ordNumbers = result
-          .map(row => row.order_number)
-          .filter(order => order.startsWith("ORD"))
-          .map(order => parseInt(order.slice(3), 10));
-  
-        const lastOrderNumber = Math.max(...ordNumbers);
-        const nextOrderNumber = `ORD${String(lastOrderNumber + 1).padStart(3, "0")}`;
-        res.json({ lastOrderNumber: nextOrderNumber });
-      } else {
-        res.json({ lastOrderNumber: "ORD001" });
-      }
+        if (err) {
+            console.error("Error fetching last order number:", err);
+            return res.status(500).json({ error: "Failed to fetch last order number" });
+        }
+
+        if (result.length > 0) {
+            const ordNumbers = result
+                .map(row => row.order_number)
+                .filter(order => order.startsWith("ORD"))
+                .map(order => parseInt(order.slice(3), 10));
+
+            const lastOrderNumber = Math.max(...ordNumbers);
+            const nextOrderNumber = `ORD${String(lastOrderNumber + 1).padStart(3, "0")}`;
+            res.json({ lastOrderNumber: nextOrderNumber });
+        } else {
+            res.json({ lastOrderNumber: "ORD001" });
+        }
     });
-  });
+});
 
 
-  app.put("/api/orders/cancel/:orderId", (req, res) => {
+app.put("/api/orders/cancel/:orderId", (req, res) => {
     const { orderId } = req.params;
 
     const sql = `
@@ -674,26 +674,26 @@ app.put("/api/orders/cancel/handle/:orderId", (req, res) => {
 
         res.status(200).json({ message: `Order cancellation ${action.toLowerCase()} successfully` });
     });
-});  
+});
 
 app.post('/api/designs', (req, res) => {
     const { order_id, account_name, requested_design_name, approve_status } = req.body;
-  
+
     if (!order_id || !account_name || !requested_design_name) {
-      return res.status(400).json({ message: 'All fields are required' });
+        return res.status(400).json({ message: 'All fields are required' });
     }
-  
+
     const sql = 'INSERT INTO designs (order_id, account_name, requested_design_name, approve_status) VALUES (?, ?, ?, ?)';
     db.query(sql, [order_id, account_name, requested_design_name, approve_status], (err, result) => {
-      if (err) {
-        console.error('Error inserting data:', err);
-        return res.status(500).json({ message: 'Database error' });
-      }
-      res.status(201).json({ message: 'Design change request submitted successfully!' });
+        if (err) {
+            console.error('Error inserting data:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+        res.status(201).json({ message: 'Design change request submitted successfully!' });
     });
-  });
+});
 
-  app.get("/api/designs", (req, res) => {
+app.get("/api/designs", (req, res) => {
     const sql = "SELECT * FROM designs";
 
     db.query(sql, (err, results) => {
@@ -738,10 +738,10 @@ app.put("/api/designs/:id/approve-status", (req, res) => {
                 }
 
                 const order = orders[0]; // Get the fetched order details
-                
+
                 // Update the existing order's status to 'Modified Order'
                 const updateOrderSql = "UPDATE orders SET status = 'Modified Order' WHERE id = ?";
-                
+
                 db.query(updateOrderSql, [order.id], (orderErr) => {
                     if (orderErr) {
                         console.error("Error updating order status:", orderErr);
@@ -784,7 +784,7 @@ app.put("/api/designs/:id/approve-status", (req, res) => {
     });
 });
 
-app.delete("/delete-order/:id", (req, res) => {
+app.delete("/api/delete-order/:id", (req, res) => {
     const orderId = req.params.id;
 
     const sql = "DELETE FROM orders WHERE id = ?";

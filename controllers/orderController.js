@@ -267,6 +267,68 @@ const deleteOrder = (req, res) => {
     });
 };
 
+const getOrderController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await OrderModel.getOrderById(id);  // ✅ Use OrderModel.getOrderById
+
+        if (!order) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        res.status(200).json(order);
+    } catch (error) {
+        console.error("Error fetching order:", error);
+        res.status(500).json({ error: "Database error" });
+    }
+};
+
+const updateOrderController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let updatedOrder = { ...req.body };
+
+        // Remove imagePreview since it's not stored in the database
+        delete updatedOrder.imagePreview;
+
+        let imageUrl = null;
+        let imageFile = req.files?.image;
+
+        // Handle Base64 Image Conversion
+        if (req.body.imagePreview && req.body.imagePreview.startsWith("data:image")) {
+            const base64Data = req.body.imagePreview.replace(/^data:image\/\w+;base64,/, "");
+            const imageBuffer = Buffer.from(base64Data, "base64");
+            const imageName = `uploads/${Date.now()}.png`;
+
+            fs.writeFileSync(imageName, imageBuffer); // Save file
+            imageUrl = `/${imageName}`; // Store path for DB
+        }
+        // If file is uploaded via FormData
+        else if (imageFile) {
+            imageUrl = `/uploads/${imageFile.filename}`;
+        }
+
+        // If an image was processed, update its URL in the database
+        if (imageUrl) {
+            updatedOrder.image_url = imageUrl;
+        }
+
+        // Update the order in the database
+        const result = await OrderModel.updateOrder(id, updatedOrder);
+
+        // Check if update was successful
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found or no changes made" });
+        }
+
+        res.status(200).json({ message: "Order updated successfully", imageUrl });
+    } catch (error) {
+        console.error("Error updating order:", error);
+        res.status(500).json({ error: "Failed to update order" });
+    }
+};
+
+
 module.exports = { 
     getLastOrderNumber, 
     createOrder, 
@@ -279,5 +341,7 @@ module.exports = {
     requestCancel,
     handleCancelRequest,
     updateApproveStatus,
-    deleteOrder
+    deleteOrder,
+    getOrderController,
+    updateOrderController
 };

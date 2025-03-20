@@ -1,4 +1,11 @@
 const db = require("../db");
+const moment = require("moment");
+
+// Function to format date for MySQL
+const formatDateForMySQL = (dateString) => {
+    if (!dateString) return null;
+    return moment(dateString).format("YYYY-MM-DD HH:mm:ss");
+};
 
 const getLastOrderNumber = (callback) => {
   const query = "SELECT order_number FROM orders WHERE order_number LIKE 'ORD%' ORDER BY id DESC";
@@ -123,6 +130,48 @@ const deleteOrderById = (orderId, callback) => {
   });
 };
 
+const getOrderById = async (id) => {
+  try {
+      const sql = "SELECT * FROM orders WHERE id = ?";
+      const [result] = await db.promise().query(sql, [id]);
+
+      if (result.length === 0) {
+          return null; // No order found
+      }
+
+      return result[0]; // Return the first order object
+  } catch (error) {
+      throw error;
+  }
+};
+
+const updateOrder = async (id, updatedOrder) => {
+  try {
+      // Convert date fields before updating DB
+      ["date", "estimated_delivery_date", "delivery_date", "created_at", "updated_at"].forEach((field) => {
+          if (updatedOrder[field]) {
+              updatedOrder[field] = formatDateForMySQL(updatedOrder[field]);
+          }
+      });
+
+      // Construct SET clause dynamically
+      const fields = Object.keys(updatedOrder).map((field) => `${field} = ?`).join(", ");
+      const values = Object.values(updatedOrder);
+
+      const query = `UPDATE orders SET ${fields} WHERE id = ?`;
+
+      // Execute query with values using `db.promise()`
+      const [result] = await db.promise().execute(query, [...values, id]);
+
+      return result;
+  } catch (error) {
+      throw error;
+  }
+};
+
+
+
+
 
 module.exports = {
   getLastOrderNumber,
@@ -139,5 +188,7 @@ module.exports = {
   fetchOrderAndDesign,
   updateStatus,
   insertNewOrder,
-  deleteOrderById
+  deleteOrderById,
+  getOrderById,
+  updateOrder
 };

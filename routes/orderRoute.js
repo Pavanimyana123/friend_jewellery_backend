@@ -20,8 +20,8 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10 MB file size limit
-        fieldSize: 10 * 1024 * 1024, // 10 MB field size limit
+        fileSize: 50 * 1024 * 1024, // 10 MB file size limit
+        fieldSize: 50 * 1024 * 1024, // 10 MB field size limit
     },
 });
 
@@ -38,5 +38,7 @@ router.put("/orders/cancel/:orderId", orderController.requestCancel);
 router.put("/orders/cancel/handle/:orderId", orderController.handleCancelRequest);
 router.put("/designs/:id/approve-status", orderController.updateApproveStatus);
 router.delete("/delete-order/:id", orderController.deleteOrder);
+router.get("/getorder/:id", orderController.getOrderController);
+router.put("/updateorders/:id", orderController.updateOrderController);
 
 module.exports = router;
