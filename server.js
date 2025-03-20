@@ -36,10 +36,10 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Pavani@123',
+    // password: 'Pavani@123',
     // password: 'Bharath@123',
 
-    // password: 'Bunny@123',
+    password: 'Bunny@123',
     database: 'friends_jewellerydb',
     port: 3307,
 });
