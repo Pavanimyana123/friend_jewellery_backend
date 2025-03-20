@@ -448,12 +448,6 @@ app.put("/api/orders/:id", async (req, res) => {
     }
 });
 
-
-
-
-
-
-
 app.delete("/delete-account/:id", (req, res) => {
     const accountId = req.params.id;
 
