@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const orderController = require("../controllers/orderController");
 
 const router = express.Router();
@@ -23,6 +24,32 @@ const upload = multer({
         fileSize: 50 * 1024 * 1024, // 10 MB file size limit
         fieldSize: 50 * 1024 * 1024, // 10 MB field size limit
     },
+});
+
+// Ensure 'uploads/invoices' directory exists
+const invoiceDir = path.join(__dirname, "../uploads/invoices");
+if (!fs.existsSync(invoiceDir)) {
+  fs.mkdirSync(invoiceDir, { recursive: true });
+}
+
+// Invoice Upload Configuration
+const invoiceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, invoiceDir); // Save in /uploads/invoices
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Keep invoice number as filename (e.g., INV001.pdf)
+  },
+});
+
+const uploadInvoice = multer({ storage: invoiceStorage });
+
+// Route to upload invoice PDF
+router.post("/upload-invoice", uploadInvoice.single("invoice"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+  res.json({ message: "Invoice uploaded successfully", file: req.file.filename });
 });
 
 
