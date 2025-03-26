@@ -55,7 +55,7 @@ const createOrder = async (req, res) => {
                     orderData.city || "", orderData.pincode || "", orderData.state || "",
                     orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
                     orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                    orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date, 
+                    orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date,
                     orderData.metal || "", orderData.category || "",
                     orderData.subcategory || "", orderData.product_design_name || "", orderData.purity || null,
                     orderData.gross_weight || 0, orderData.stone_weight || 0, orderData.stone_price || 0,
@@ -63,7 +63,7 @@ const createOrder = async (req, res) => {
                     orderData.wastage_weight || 0, orderData.total_weight_aw || 0, orderData.rate || 0,
                     orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
                     orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
-                    orderData.total_price || 0, orderData.remarks || "",orderData.delivery_date === "" ? null : orderData.delivery_date,
+                    orderData.total_price || 0, orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
                     imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "", orderData.assigned_status || "Not Assigned",
                 ];
 
@@ -329,9 +329,36 @@ const updateOrderController = async (req, res) => {
 };
 
 
-module.exports = { 
-    getLastOrderNumber, 
-    createOrder, 
+const updateInvoiceStatus = async (req, res) => {
+    const { orderIds, invoiceNumber } = req.body;
+
+    if (!orderIds || orderIds.length === 0 || !invoiceNumber) {
+        return res.status(400).json({ message: "Invalid request data" });
+    }
+
+    try {
+        await OrderModel.updateInvoiceStatus(orderIds, invoiceNumber);
+        res.json({ message: "Invoice status updated successfully" });
+    } catch (error) {
+        console.error("Error updating invoice status:", error);
+        res.status(500).json({ message: "Failed to update invoice status" });
+    }
+};
+
+const getLatestInvoiceNumber = async (req, res) => {
+    try {
+        const latestInvoice = await OrderModel.getLatestInvoiceNumber();
+        res.json({ latestInvoiceNumber: latestInvoice });
+    } catch (error) {
+        console.error("Error fetching latest invoice number:", error);
+        res.status(500).json({ message: "Failed to fetch latest invoice number" });
+    }
+};
+
+
+module.exports = {
+    getLastOrderNumber,
+    createOrder,
     getAllOrders,
     assignOrder,
     updateStatus,
@@ -343,5 +370,7 @@ module.exports = {
     updateApproveStatus,
     deleteOrder,
     getOrderController,
-    updateOrderController
+    updateOrderController,
+    updateInvoiceStatus,
+    getLatestInvoiceNumber
 };

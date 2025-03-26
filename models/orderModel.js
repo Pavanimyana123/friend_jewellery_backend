@@ -147,27 +147,53 @@ const getOrderById = async (id) => {
 
 const updateOrder = async (id, updatedOrder) => {
   try {
-      // Convert date fields before updating DB
-      ["date", "estimated_delivery_date", "delivery_date", "created_at", "updated_at"].forEach((field) => {
-          if (updatedOrder[field]) {
-              updatedOrder[field] = formatDateForMySQL(updatedOrder[field]);
-          }
-      });
+    // Convert date fields before updating DB
+    const dateFields = [
+      "date",
+      "estimated_delivery_date",
+      "delivery_date",
+      "created_at",
+      "updated_at",
+    ];
 
-      // Construct SET clause dynamically
-      const fields = Object.keys(updatedOrder).map((field) => `${field} = ?`).join(", ");
-      const values = Object.values(updatedOrder);
+    dateFields.forEach((field) => {
+      if (updatedOrder[field] === "") {
+        updatedOrder[field] = null; // Convert empty string to NULL
+      } else if (updatedOrder[field]) {
+        updatedOrder[field] = formatDateForMySQL(updatedOrder[field]);
+      }
+    });
 
-      const query = `UPDATE orders SET ${fields} WHERE id = ?`;
+    // Construct SET clause dynamically
+    const fields = Object.keys(updatedOrder)
+      .map((field) => `${field} = ?`)
+      .join(", ");
+    const values = Object.values(updatedOrder);
 
-      // Execute query with values using `db.promise()`
-      const [result] = await db.promise().execute(query, [...values, id]);
+    const query = `UPDATE orders SET ${fields} WHERE id = ?`;
 
-      return result;
+    // Execute query with values using `db.promise()`
+    const [result] = await db.promise().execute(query, [...values, id]);
+
+    return result;
   } catch (error) {
-      throw error;
+    throw error;
   }
 };
+
+
+const updateInvoiceStatus = async (orderIds, invoiceNumber) => {
+  const sql = "UPDATE orders SET invoice_generated = 'Yes', invoice_number = ? WHERE id IN (?)";
+  return db.promise().query(sql, [invoiceNumber, orderIds]);
+};
+
+const getLatestInvoiceNumber = async () => {
+  const sql = "SELECT invoice_number FROM orders ORDER BY invoice_number DESC LIMIT 1";
+  const [rows] = await db.promise().query(sql);
+  return rows.length > 0 ? rows[0].invoice_number : null;
+};
+
+
 
 
 
@@ -190,5 +216,7 @@ module.exports = {
   insertNewOrder,
   deleteOrderById,
   getOrderById,
-  updateOrder
+  updateOrder,
+  updateInvoiceStatus,
+  getLatestInvoiceNumber
 };

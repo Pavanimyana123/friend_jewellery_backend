@@ -41,4 +41,7 @@ router.delete("/delete-order/:id", orderController.deleteOrder);
 router.get("/getorder/:id", orderController.getOrderController);
 router.put("/updateorders/:id", orderController.updateOrderController);
 
+router.post("/update-invoice-status", orderController.updateInvoiceStatus);
+router.get("/get-latest-invoice", orderController.getLatestInvoiceNumber);
+
 module.exports = router;

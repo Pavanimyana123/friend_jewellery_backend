@@ -9,7 +9,7 @@ const rateRoutes = require("./routes/ratesRoute");
 const designRoutes = require("./routes/designRoutes");
 
 const app = express();
-const PORT = 5000;
+const PORT = 5001;
 
 app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
