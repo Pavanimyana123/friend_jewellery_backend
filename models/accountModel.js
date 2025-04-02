@@ -48,16 +48,16 @@ const updateAccountById = (id, accountData) => {
             UPDATE account_details
             SET account_name=?, print_name=?, account_group=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
                 phone=?, mobile=?, email=?, birthday=?, anniversary=?, bank_account_no=?, bank_name=?,
-                ifsc_code=?, branch=?, gst_in=?, aadhar_card=?, pan_card=?
+                ifsc_code=?, branch=?, gst_in=?, aadhar_card=?, pan_card=?, password=?
             WHERE id=?
         `;
 
         const values = [
-            accountData.account_name, accountData.print_name, accountData.account_group, accountData.address1, accountData.address2,
+            accountData.account_name, accountData.account_name, accountData.account_group, accountData.address1, accountData.address2,
             accountData.city, accountData.pincode, accountData.state, accountData.state_code,
             accountData.phone, accountData.mobile, accountData.email, accountData.birthday, accountData.anniversary,
             accountData.bank_account_no, accountData.bank_name, accountData.ifsc_code, accountData.branch,
-            accountData.gst_in, accountData.aadhar_card, accountData.pan_card, id
+            accountData.gst_in, accountData.aadhar_card, accountData.pan_card,accountData.password, id
         ];
 
         db.query(sql, values, (err, result) => {

@@ -59,7 +59,7 @@ exports.updateAccount = async (req, res) => {
         let {
             account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
             phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
-            ifsc_code, branch, gst_in, aadhar_card, pan_card
+            ifsc_code, branch, gst_in, aadhar_card, pan_card, password
         } = req.body;
 
         // Convert dates to MySQL format (YYYY-MM-DD)
@@ -69,7 +69,7 @@ exports.updateAccount = async (req, res) => {
         const updatedAccount = await Account.updateAccountById(accountId, {
             account_name, print_name, account_group, address1, address2, city, pincode, state, state_code,
             phone, mobile, email, birthday, anniversary, bank_account_no, bank_name,
-            ifsc_code, branch, gst_in, aadhar_card, pan_card
+            ifsc_code, branch, gst_in, aadhar_card, pan_card, password
         });
 
         if (updatedAccount.affectedRows === 0) {
