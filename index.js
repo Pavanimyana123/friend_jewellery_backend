@@ -6,6 +6,7 @@ const accountRoutes = require("./routes/accountRoutes");
 const stateRoutes = require("./routes/stateRoutes");
 const loginRoutes = require("./routes/loginRoutes");
 const orderRoutes = require("./routes/orderRoute");
+const authRoutes = require("./routes/authRoutes");
 const rateRoutes = require("./routes/ratesRoute");
 const designRoutes = require("./routes/designRoutes");
 
@@ -20,6 +21,7 @@ app.use("/invoices", express.static(path.join(__dirname, "uploads/invoices")));
 
 
 app.use("/", accountRoutes);
+app.use("/", authRoutes);
 app.use("/", stateRoutes);
 app.use("/", loginRoutes);
 app.use("/api", orderRoutes);
