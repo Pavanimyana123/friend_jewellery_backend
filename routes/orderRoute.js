@@ -53,6 +53,7 @@ router.post("/upload-invoice", uploadInvoice.single("invoice"), (req, res) => {
 });
 
 
+
 router.get("/lastOrderNumber", orderController.getLastOrderNumber);
 router.post("/orders", upload.array("image"), orderController.createOrder);
 router.get("/orders", orderController.getAllOrders);
@@ -70,5 +71,8 @@ router.put("/updateorders/:id", orderController.updateOrderController);
 
 router.post("/update-invoice-status", orderController.updateInvoiceStatus);
 router.get("/get-latest-invoice", orderController.getLatestInvoiceNumber);
+
+router.post("/update-estimate-status", orderController.updateEstimateStatus);
+router.get("/get-latest-estimate", orderController.getLatestEstimateNumber);
 
 module.exports = router;

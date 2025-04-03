@@ -194,6 +194,18 @@ const getLatestInvoiceNumber = async () => {
 };
 
 
+const updateEstimateStatus = async (orderIds, estimateNumber) => {
+  const sql = "UPDATE orders SET estimate_generated = 'Yes', estimate_number = ? WHERE id IN (?)";
+  return db.promise().query(sql, [estimateNumber, orderIds]);
+};
+
+const getLatestEstimateNumber = async () => {
+  const sql = "SELECT estimate_number FROM orders ORDER BY estimate_number DESC LIMIT 1";
+  const [rows] = await db.promise().query(sql);
+  return rows.length > 0 ? rows[0].estimate_number : null;
+};
+
+
 
 
 
@@ -218,5 +230,7 @@ module.exports = {
   getOrderById,
   updateOrder,
   updateInvoiceStatus,
-  getLatestInvoiceNumber
+  getLatestInvoiceNumber,
+  updateEstimateStatus,
+  getLatestEstimateNumber
 };

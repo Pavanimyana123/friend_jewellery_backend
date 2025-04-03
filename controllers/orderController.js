@@ -329,7 +329,6 @@ const updateOrderController = async (req, res) => {
     }
 };
 
-
 const updateInvoiceStatus = async (req, res) => {
     const { orderIds, invoiceNumber } = req.body;
 
@@ -356,6 +355,34 @@ const getLatestInvoiceNumber = async (req, res) => {
     }
 };
 
+const updateEstimateStatus = async (req, res) => {
+    const { orderIds, estimateNumber } = req.body;
+
+    if (!orderIds || orderIds.length === 0 || !estimateNumber) {
+        return res.status(400).json({ message: "Invalid request data" });
+    }
+
+    try {
+        await OrderModel.updateEstimateStatus(orderIds, estimateNumber);
+        res.json({ message: "Estimate status updated successfully" });
+    } catch (error) {
+        console.error("Error updating Estimate status:", error);
+        res.status(500).json({ message: "Failed to update invoice status" });
+    }
+};
+
+const getLatestEstimateNumber = async (req, res) => {
+    try {
+        const latestEstimate = await OrderModel.getLatestEstimateNumber();
+        res.json({ latestEstimateNumber: latestEstimate });
+    } catch (error) {
+        console.error("Error fetching latest Estimate number:", error);
+        res.status(500).json({ message: "Failed to fetch latest Estimate number" });
+    }
+};
+
+
+
 
 module.exports = {
     getLastOrderNumber,
@@ -373,5 +400,7 @@ module.exports = {
     getOrderController,
     updateOrderController,
     updateInvoiceStatus,
-    getLatestInvoiceNumber
+    getLatestInvoiceNumber,
+    updateEstimateStatus,
+    getLatestEstimateNumber
 };
