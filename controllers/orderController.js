@@ -65,7 +65,8 @@ const createOrder = async (req, res) => {
                     orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
                     orderData.total_price || 0, orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
                     imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "", orderData.assigned_status || "Not Assigned",
-                    orderData.stone_name || "", orderData.o_size || "", orderData.o_length || ""
+                    orderData.stone_name || "", orderData.o_size || "", orderData.o_length || "",
+                    orderData.overall_total_weight || "", orderData.overall_total_price || "", orderData.advance_gross_wt || "", orderData.fine_wt || "", orderData.advance_amount || ""
                 ];
 
                 OrderModel.createOrder(values, (err, result) => {
