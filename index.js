@@ -21,7 +21,7 @@ app.use("/invoices", express.static(path.join(__dirname, "uploads/invoices")));
 
 
 app.use("/", accountRoutes);
-app.use("/", authRoutes);
+app.use("/api", authRoutes);
 app.use("/", stateRoutes);
 app.use("/", loginRoutes);
 app.use("/api", orderRoutes);
