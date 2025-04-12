@@ -1,5 +1,6 @@
 const fs = require("fs");
 const OrderModel = require("../models/orderModel");
+const db = require("../db");
 
 const getLastOrderNumber = (req, res) => {
     OrderModel.getLastOrderNumber((err, result) => {
@@ -32,6 +33,16 @@ const createOrder = async (req, res) => {
 
         const orders = Array.isArray(req.body.order) ? req.body.order : [req.body.order];
 
+        // Fetch the current max actual_order_id
+        const [rows] = await new Promise((resolve, reject) => {
+            db.query("SELECT MAX(actual_order_id) AS maxId FROM orders", (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            });
+        });
+
+        let currentActualId = rows.maxId || 0;
+
         const queries = orders.map(async (orderStr, index) => {
             const orderData = JSON.parse(orderStr);
             let imageUrl = null;
@@ -41,12 +52,14 @@ const createOrder = async (req, res) => {
                 const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
                 const imageBuffer = Buffer.from(base64Data, "base64");
                 const imageName = `uploads/${Date.now()}.png`;
-
                 fs.writeFileSync(imageName, imageBuffer);
                 imageUrl = `/${imageName}`;
             } else if (imageFile) {
                 imageUrl = `/uploads/${imageFile.filename}`;
             }
+
+            // Increment actual_order_id
+            currentActualId += 1;
 
             return new Promise((resolve, reject) => {
                 const values = [
@@ -66,7 +79,8 @@ const createOrder = async (req, res) => {
                     orderData.total_price || 0, orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
                     imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "", orderData.assigned_status || "Not Assigned",
                     orderData.stone_name || "", orderData.o_size || "", orderData.o_length || "",
-                    orderData.overall_total_weight || "", orderData.overall_total_price || "", orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_amount || 0
+                    orderData.overall_total_weight || "", orderData.overall_total_price || "", orderData.advance_gross_wt || 0,
+                    orderData.fine_wt || 0, orderData.advance_amount || 0, currentActualId // Add it here
                 ];
 
                 OrderModel.createOrder(values, (err, result) => {
@@ -84,6 +98,7 @@ const createOrder = async (req, res) => {
         res.status(400).json({ error: "Invalid request format", details: error.message });
     }
 };
+
 
 const getAllOrders = (req, res) => {
     OrderModel.getAllOrders((err, results) => {

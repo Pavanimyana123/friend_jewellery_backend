@@ -18,12 +18,13 @@ const createOrder = (orderData, callback) => {
         aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
         total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-        remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, overall_total_weight, overall_total_price, 
-        advance_gross_wt, fine_wt, advance_amount
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
+        overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, actual_order_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   db.query(sql, orderData, callback);
 };
+
 
 const getAllOrders = (callback) => {
   const sql = "SELECT * FROM orders";
@@ -103,8 +104,8 @@ const insertNewOrder = (order, callback) => {
       aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, 
       product_design_name, status, purity, gross_weight, stone_weight, stone_price, weight_bw, wastage_on, 
       wastage_percentage, wastage_weight, total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, 
-      tax_percentage, tax_amount, total_price, remarks, delivery_date, image_url, order_status, qty) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      tax_percentage, tax_amount, total_price, remarks, delivery_date, image_url, order_status, qty, actual_order_id) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
@@ -115,7 +116,7 @@ const insertNewOrder = (order, callback) => {
     "Actual Order", order.purity, order.gross_weight, order.stone_weight, order.stone_price, order.weight_bw,
     order.wastage_on, order.wastage_percentage, order.wastage_weight, order.total_weight_aw, order.rate, order.amount,
     order.mc_on, order.mc_percentage, order.total_mc, order.tax_percentage, order.tax_amount, order.total_price,
-    order.remarks, order.delivery_date, order.image_url, order.order_status, order.qty
+    order.remarks, order.delivery_date, order.image_url, order.order_status, order.qty, order.actual_order_id
   ];
 
   db.query(sql, values, callback);
