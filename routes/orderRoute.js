@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const db = require("../db");
 const orderController = require("../controllers/orderController");
 
 const router = express.Router();
@@ -74,5 +75,70 @@ router.get("/get-latest-invoice", orderController.getLatestInvoiceNumber);
 
 router.post("/update-estimate-status", orderController.updateEstimateStatus);
 router.get("/get-latest-estimate", orderController.getLatestEstimateNumber);
+
+
+// router.put('/rate/:orderId', (req, res) => {
+//   const { orderId } = req.params;
+//   const { rating } = req.body;
+
+//   // Basic validation
+//   if (!rating || rating < 1 || rating > 5) {
+//     return res.status(400).json({ error: 'Please provide a valid rating between 1 and 5' });
+//   }
+
+//   // Update query
+//   const query = 'UPDATE orders SET customer_rating = ? WHERE id = ?';
+//   db.query(query, [rating, orderId], (err, result) => {
+//     if (err) {
+//       console.error('Error submitting rating:', err);
+//       return res.status(500).json({ error: 'Failed to submit rating' });
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ error: 'Order not found' });
+//     }
+
+//     return res.json({
+//       success: true,
+//       message: 'Rating submitted successfully',
+//       orderId,
+//       new_rating: rating
+//     });
+//   });
+// });
+
+router.put('/rate/:orderId', (req, res) => {
+  const { orderId } = req.params;
+  const { rating, reviewText } = req.body;
+
+  // Basic validation
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Please provide a valid rating between 1 and 5' });
+  }
+
+  // Update query (including reviewText)
+  const query = 'UPDATE orders SET customer_rating = ?, review_text = ? WHERE id = ?';
+  db.query(query, [rating, reviewText, orderId], (err, result) => {
+    if (err) {
+      console.error('Error submitting rating:', err);
+      return res.status(500).json({ error: 'Failed to submit rating' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Rating and review submitted successfully',
+      orderId,
+      new_rating: rating,
+      new_review: reviewText
+    });
+  });
+});
+
+
+
 
 module.exports = router;
