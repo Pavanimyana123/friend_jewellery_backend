@@ -5,6 +5,10 @@ const transporter = require("../emailConfig");
 exports.createAccount = (req, res) => {
     const accountData = req.body;
 
+    // Generate password exactly as done in model.js
+    const cleanedName = accountData.account_name.replace(/\s+/g, "");
+    const generatedPassword = `${cleanedName.charAt(0).toUpperCase()}${cleanedName.slice(1).toLowerCase()}@123`;
+
     Account.addAccount(accountData, (err, result) => {
         if (err) {
             console.error("Error inserting account details:", err);
@@ -16,7 +20,7 @@ exports.createAccount = (req, res) => {
             from: "manitejavadnala@gmail.com",
             to: accountData.email,
             subject: "Account Successfully Created",
-            text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${accountData.email}\nPassword: ${accountData.account_name}@123\n\nBest Regards,\nNew Friend's Jewellery`,
+            text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${accountData.email}\nPassword: ${generatedPassword}\n\nBest Regards,\nNew Friend's Jewellery`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -28,6 +32,7 @@ exports.createAccount = (req, res) => {
         });
     });
 };
+
 
 exports.getAllAccounts = (req, res) => {
     Account.getAll((err, results) => {

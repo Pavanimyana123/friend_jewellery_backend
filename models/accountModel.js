@@ -7,7 +7,9 @@ const addAccount = (accountData, callback) => {
         ifsc_code, branch, gst_in, aadhar_card, pan_card
     } = accountData;
 
-    const password = `${account_name}@123`;
+    // Remove spaces and capitalize only the first letter
+    const cleanedName = account_name.replace(/\s+/g, "");
+    const password = `${cleanedName.charAt(0).toUpperCase()}${cleanedName.slice(1).toLowerCase()}@123`;
 
     const sanitizeValue = (value) => (value === "" ? null : value);
 
