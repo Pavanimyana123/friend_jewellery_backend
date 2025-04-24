@@ -1,6 +1,7 @@
 const fs = require("fs");
 const OrderModel = require("../models/orderModel");
 const db = require("../db");
+const transporter = require('../emailConfig'); 
 
 const getLastOrderNumber = (req, res) => {
     OrderModel.getLastOrderNumber((err, result) => {
@@ -189,8 +190,27 @@ const updateAssignedStatus = (req, res) => {
     });
 };
 
+// const requestCancel = (req, res) => {
+//     const { orderId } = req.params;
+
+//     OrderModel.requestCancel(orderId, (err, result) => {
+//         if (err) {
+//             console.error("Error updating cancel request:", err);
+//             return res.status(500).json({ error: "Database error" });
+//         }
+
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ error: "Order not found" });
+//         }
+
+//         res.status(200).json({ message: "Order cancellation requested successfully" });
+//     });
+// };
+
+
 const requestCancel = (req, res) => {
     const { orderId } = req.params;
+    const { customerEmail, category, subcategory, orderNumber } = req.body;
 
     OrderModel.requestCancel(orderId, (err, result) => {
         if (err) {
@@ -202,9 +222,35 @@ const requestCancel = (req, res) => {
             return res.status(404).json({ error: "Order not found" });
         }
 
+        const mailOptions = {
+            from: `"Customer" <${customerEmail}>`,
+            to: "manitejavadnala079@gmail.com",
+            subject: `Cancellation Request for Order #${orderId}`,
+            text: `
+A cancellation request has been made for the following order:
+
+- Order ID: ${orderId}
+- Order Number: ${orderNumber}
+- Category: ${category}
+- Subcategory: ${subcategory}
+- Requested By: ${customerEmail}
+
+Please review this request in the admin dashboard.
+            `.trim()
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Failed to send cancellation email to admin:", error);
+            } else {
+                console.log("Cancellation email sent to admin:", info.response);
+            }
+        });
+
         res.status(200).json({ message: "Order cancellation requested successfully" });
     });
 };
+
 
 const handleCancelRequest = (req, res) => {
     const { orderId } = req.params;
