@@ -158,11 +158,34 @@ const updateStatus = (req, res) => {
 //     });
 // };
 
+// const updateWorkStatus = (req, res) => {
+//     const { orderId } = req.params;
+//     const { work_status } = req.body;
+
+//     OrderModel.updateWorkStatus(orderId, work_status, (err, result) => {
+//         if (err) {
+//             console.error("Error updating work status:", err);
+//             return res.status(500).json({ error: "Database error" });
+//         }
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ error: "Order not found" });
+//         }
+//         res.status(200).json({ message: "Work status updated successfully" });
+//     });
+// };
+
 const updateWorkStatus = (req, res) => {
     const { orderId } = req.params;
     const { work_status } = req.body;
 
-    OrderModel.updateWorkStatus(orderId, work_status, (err, result) => {
+    let order_status = null;
+    if (work_status === "In Progress" || work_status === "Hold") {
+        order_status = "Processing";
+    } else if (work_status === "Completed") {
+        order_status = "Ready for Delivery";
+    }
+
+    OrderModel.updateWorkStatus(orderId, work_status, order_status, (err, result) => {
         if (err) {
             console.error("Error updating work status:", err);
             return res.status(500).json({ error: "Database error" });
@@ -173,6 +196,7 @@ const updateWorkStatus = (req, res) => {
         res.status(200).json({ message: "Work status updated successfully" });
     });
 };
+
 
 const updateAssignedStatus = (req, res) => {
     const { orderId } = req.params;
@@ -391,6 +415,23 @@ const updateOrderController = async (req, res) => {
     }
 };
 
+// const updateInvoiceStatus = async (req, res) => {
+//     const { orderIds, invoiceNumber } = req.body;
+
+//     if (!orderIds || orderIds.length === 0 || !invoiceNumber) {
+//         return res.status(400).json({ message: "Invalid request data" });
+//     }
+
+//     try {
+//         await OrderModel.updateInvoiceStatus(orderIds, invoiceNumber);
+//         res.json({ message: "Invoice status updated successfully" });
+//     } catch (error) {
+//         console.error("Error updating invoice status:", error);
+//         res.status(500).json({ message: "Failed to update invoice status" });
+//     }
+// };
+
+
 const updateInvoiceStatus = async (req, res) => {
     const { orderIds, invoiceNumber } = req.body;
 
@@ -399,11 +440,16 @@ const updateInvoiceStatus = async (req, res) => {
     }
 
     try {
+        // Update invoice status and order status to Delivered
         await OrderModel.updateInvoiceStatus(orderIds, invoiceNumber);
-        res.json({ message: "Invoice status updated successfully" });
+
+        // Also update order_status to 'Delivered'
+        await OrderModel.updateOrderStatusToDelivered(orderIds);
+
+        res.json({ message: "Invoice and order status updated successfully" });
     } catch (error) {
-        console.error("Error updating invoice status:", error);
-        res.status(500).json({ message: "Failed to update invoice status" });
+        console.error("Error updating invoice and order status:", error);
+        res.status(500).json({ message: "Failed to update invoice and order status" });
     }
 };
 
