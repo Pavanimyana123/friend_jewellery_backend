@@ -10,6 +10,7 @@ const authRoutes = require("./routes/authRoutes");
 const rateRoutes = require("./routes/ratesRoute");
 const designRoutes = require("./routes/designRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
+const broucherRoutes = require("./routes/broucherRoute");
 
 const app = express();
 const PORT = 5001;
@@ -29,6 +30,7 @@ app.use("/api", orderRoutes);
 app.use("/", rateRoutes);
 app.use("/api", designRoutes);
 app.use("/api", galleryRoutes);
+app.use("/api", broucherRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
