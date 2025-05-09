@@ -61,4 +61,24 @@ router.get("/broucher-items", (req, res) => {
     });
 });
 
+router.post("/delete-broucher-items", (req, res) => {
+    const { ids } = req.body; // expects: { ids: [1, 2, 3] }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided for deletion" });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const deleteSql = `DELETE FROM brouchers WHERE id IN (${placeholders})`;
+
+    db.query(deleteSql, ids, (err, result) => {
+        if (err) {
+            console.error("Delete error:", err);
+            return res.status(500).json({ error: "Failed to delete brouchers items" });
+        }
+
+        res.status(200).json({ message: "brouchers items deleted successfully" });
+    });
+});
+
 module.exports = router;

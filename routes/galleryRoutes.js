@@ -77,5 +77,26 @@ router.get("/gallery-items", (req, res) => {
     });
 });
 
+router.post("/delete-gallery-items", (req, res) => {
+    const { ids } = req.body; // expects: { ids: [1, 2, 3] }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided for deletion" });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const deleteSql = `DELETE FROM gallery WHERE id IN (${placeholders})`;
+
+    db.query(deleteSql, ids, (err, result) => {
+        if (err) {
+            console.error("Delete error:", err);
+            return res.status(500).json({ error: "Failed to delete gallery items" });
+        }
+
+        res.status(200).json({ message: "Gallery items deleted successfully" });
+    });
+});
+
+
 
 module.exports = router;
