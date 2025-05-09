@@ -33,25 +33,26 @@ const upload = multer({
 
 // Route to add an item to the gallery (image upload and other details)
 router.post("/add-gallery-item", upload.single("image"), (req, res) => {
-    const { product_name, catalog_reference, catalog_name, design_name, weight } = req.body;
+    const {
+        product_name = '0',
+        catalog_reference = '0',
+        catalog_name = '0',
+        design_name = '0',
+        // weight = 0
+    } = req.body;
+
     const image = req.file ? req.file.filename : null;
 
-    // Basic validation
-    if (!product_name || !catalog_reference || !catalog_name || !design_name || !weight ) {
-        return res.status(400).json({ error: "All fields are required" });
-    }
-
-    // Insert query for the gallery
     const sql = `
-        INSERT INTO gallery (product_name, catalog_reference, catalog_name, design_name, weight, image)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO gallery (product_name, catalog_reference, catalog_name, design_name, image)
+        VALUES (?, ?, ?, ?, ?)
     `;
     const values = [
         product_name,
         catalog_reference,
         catalog_name,
         design_name,
-        weight,
+        // weight,
         image,
     ];
 
@@ -63,6 +64,7 @@ router.post("/add-gallery-item", upload.single("image"), (req, res) => {
         res.status(200).json({ message: "Gallery item added successfully", id: result.insertId });
     });
 });
+
 
 router.get("/gallery-items", (req, res) => {
     const sql = "SELECT * FROM gallery ORDER BY id DESC";
