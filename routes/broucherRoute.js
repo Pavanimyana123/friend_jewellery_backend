@@ -33,15 +33,15 @@ const upload = multer({
 
 // 📤 POST: Add a new broucher
 router.post("/add-broucher-item", upload.single("file"), (req, res) => {
-    const { broucher_name, description } = req.body;
+    const { broucher_name, description, purity } = req.body;
     const file_path = req.file ? req.file.filename : null;
 
     if (!broucher_name || !file_path) {
         return res.status(400).json({ error: "Product name and file are required" });
     }
 
-    const sql = `INSERT INTO brouchers (broucher_name, description, file_path) VALUES (?, ?, ?)`;
-    db.query(sql, [broucher_name, description, file_path], (err, result) => {
+    const sql = `INSERT INTO brouchers (broucher_name, description, purity, file_path) VALUES (?, ?, ?, ?)`;
+    db.query(sql, [broucher_name, description,purity, file_path], (err, result) => {
         if (err) {
             console.error("Database insert error:", err);
             return res.status(500).json({ error: "Database error while inserting" });
