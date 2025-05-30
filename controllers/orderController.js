@@ -82,6 +82,7 @@ const createOrder = async (req, res) => {
                     orderData.stone_name || "", orderData.o_size || "", orderData.o_length || "",
                     orderData.overall_total_weight || "", orderData.overall_total_price || "", orderData.advance_gross_wt || 0,
                     orderData.fine_wt || 0, orderData.advance_amount || 0, currentActualId, orderData.balance_amt || 0,
+                    orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0,
                 ];
 
                 OrderModel.createOrder(values, (err, result) => {
