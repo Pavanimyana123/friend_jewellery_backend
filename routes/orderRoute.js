@@ -76,6 +76,9 @@ router.get("/get-latest-invoice", orderController.getLatestInvoiceNumber);
 router.post("/update-estimate-status", orderController.updateEstimateStatus);
 router.get("/get-latest-estimate", orderController.getLatestEstimateNumber);
 
+router.delete("/deleteorder/:orderNumber", orderController.deleteOrderByOrderNumber);
+
+
 
 // router.put('/rate/:orderId', (req, res) => {
 //   const { orderId } = req.params;

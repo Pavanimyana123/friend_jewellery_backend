@@ -132,7 +132,8 @@ exports.getOrderDetailsByInvoiceNumber = (req, res) => {
                 bal_after_receipt:row.bal_after_receipt,
                 net_wt:row.net_wt,
                 summary_price:row.summary_price,
-                summary_rate:row.summary_rate
+                summary_rate:row.summary_rate,
+                actual_order_id:row.actual_order_id
             };
         });
 

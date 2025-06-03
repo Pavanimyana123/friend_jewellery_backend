@@ -230,6 +230,17 @@ const getLatestEstimateNumber = async () => {
 };
 
 
+const deleteOrderByOrderNumber = (orderNumber, callback) => {
+  const sql = "DELETE FROM orders WHERE order_number = ?";
+  db.query(sql, [orderNumber], (err, result) => {
+    if (err) {
+      return callback(err, null);
+    }
+    callback(null, result);
+  });
+};
+
+
 
 
 
@@ -257,5 +268,6 @@ module.exports = {
   getLatestInvoiceNumber,
   updateEstimateStatus,
   getLatestEstimateNumber,
-  updateOrderStatusToDelivered
+  updateOrderStatusToDelivered, 
+  deleteOrderByOrderNumber
 };

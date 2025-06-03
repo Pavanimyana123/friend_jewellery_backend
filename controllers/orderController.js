@@ -1,7 +1,7 @@
 const fs = require("fs");
 const OrderModel = require("../models/orderModel");
 const db = require("../db");
-const transporter = require('../emailConfig'); 
+const transporter = require('../emailConfig');
 
 const getLastOrderNumber = (req, res) => {
     OrderModel.getLastOrderNumber((err, result) => {
@@ -42,13 +42,14 @@ const createOrder = async (req, res) => {
             });
         });
 
-        let currentActualId = rows.maxId || 0;
+        let currentActualId = parseInt(rows.maxId, 10) || 0;
 
         const queries = orders.map(async (orderStr, index) => {
             const orderData = JSON.parse(orderStr);
             let imageUrl = null;
             let imageFile = req.files?.[index];
 
+            // Handle base64 or file upload
             if (orderData.imagePreview && orderData.imagePreview.startsWith("data:image")) {
                 const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
                 const imageBuffer = Buffer.from(base64Data, "base64");
@@ -59,47 +60,84 @@ const createOrder = async (req, res) => {
                 imageUrl = `/uploads/${imageFile.filename}`;
             }
 
-            // Increment actual_order_id
-            currentActualId += 1;
+            // Use provided actual_order_id if any, else generate new
+            const actual_order_id = orderData.actual_order_id || ++currentActualId;
+
+            const values = [
+                orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
+                orderData.email || "", orderData.address1 || "", orderData.address2 || "",
+                orderData.city || "", orderData.pincode || "", orderData.state || "",
+                orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
+                orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
+                orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date,
+                orderData.metal || "", orderData.category || "", orderData.subcategory || "",
+                orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
+                orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
+                orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
+                orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
+                orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
+                parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0, orderData.total_price || 0,
+                orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
+                imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
+                orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
+                orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
+                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_amount || 0,
+                orderData.balance_amt || 0, orderData.net_wt || 0,
+                orderData.summary_price || 0, orderData.summary_rate || 0,
+                actual_order_id
+            ];
 
             return new Promise((resolve, reject) => {
-                const values = [
-                    orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
-                    orderData.email || "", orderData.address1 || "", orderData.address2 || "",
-                    orderData.city || "", orderData.pincode || "", orderData.state || "",
-                    orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
-                    orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                    orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date,
-                    orderData.metal || "", orderData.category || "",
-                    orderData.subcategory || "", orderData.product_design_name || "", orderData.purity || null,
-                    orderData.gross_weight || 0, orderData.stone_weight || 0, orderData.stone_price || 0,
-                    orderData.weight_bw || 0, orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0,
-                    orderData.wastage_weight || 0, orderData.total_weight_aw || 0, orderData.rate || 0,
-                    orderData.amount || 0, orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0,
-                    orderData.total_mc || 0, parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0,
-                    orderData.total_price || 0, orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
-                    imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "", orderData.assigned_status || "Not Assigned",
-                    orderData.stone_name || "", orderData.o_size || "", orderData.o_length || "",
-                    orderData.overall_total_weight || "", orderData.overall_total_price || "", orderData.advance_gross_wt || 0,
-                    orderData.fine_wt || 0, orderData.advance_amount || 0, currentActualId, orderData.balance_amt || 0,
-                    orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0,
-                ];
+                // First check if actual_order_id already exists
+                db.query("SELECT 1 FROM orders WHERE actual_order_id = ?", [actual_order_id], (err, result) => {
+                    if (err) return reject(err);
 
-                OrderModel.createOrder(values, (err, result) => {
-                    if (err) reject(err);
-                    else resolve(result);
+                    if (result.length > 0) {
+                        // UPDATE
+                        const updateSql = `
+                            UPDATE orders SET 
+                                account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
+                                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, product_design_name=?, purity=?,
+                                gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
+                                total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,
+                                remarks=?, delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?,
+                                overall_total_weight=?, overall_total_price=?, advance_gross_wt=?, fine_wt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?
+                            WHERE actual_order_id=?
+                        `;
+                        db.query(updateSql, values, (err, result) => {
+                            if (err) reject(err);
+                            else resolve(result);
+                        });
+                    } else {
+                        // INSERT
+                        const insertSql = `
+                            INSERT INTO orders (
+                                account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+                                aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
+                                gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+                                total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+                                remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
+                                overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, actual_order_id, balance_amt, net_wt, summary_price, summary_rate
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        `;
+                        db.query(insertSql, values, (err, result) => {
+                            if (err) reject(err);
+                            else resolve(result);
+                        });
+                    }
                 });
             });
         });
 
         await Promise.all(queries);
-        res.status(201).json({ message: "All orders added successfully", insertedRows: orders.length });
+        res.status(201).json({ message: "All orders processed successfully", insertedOrUpdated: orders.length });
 
     } catch (error) {
         console.error("Error processing order:", error);
         res.status(400).json({ error: "Invalid request format", details: error.message });
     }
 };
+
 
 
 const getAllOrders = (req, res) => {
@@ -490,6 +528,22 @@ const getLatestEstimateNumber = async (req, res) => {
     }
 };
 
+const deleteOrderByOrderNumber = (req, res) => {
+    const orderNumber = req.params.orderNumber;
+
+    OrderModel.deleteOrderByOrderNumber(orderNumber, (err, result) => {
+        if (err) {
+            console.error("Error deleting order by order_number:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        res.status(200).json({ message: "Order deleted successfully by order_number!" });
+    });
+};
+
+
 
 
 
@@ -511,5 +565,6 @@ module.exports = {
     updateInvoiceStatus,
     getLatestInvoiceNumber,
     updateEstimateStatus,
-    getLatestEstimateNumber
+    getLatestEstimateNumber,
+    deleteOrderByOrderNumber
 };
