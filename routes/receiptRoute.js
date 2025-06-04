@@ -43,6 +43,26 @@ router.post('/receipts', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
+}); 
+
+// Simple GET API to fetch all receipts
+router.get('/receipts', async (req, res) => {
+  try {
+    // Query to select all records from receipts table
+    const [receipts] = await db.promise().query('SELECT * FROM receipts');
+    
+    // Return the receipts data
+    res.json({
+      success: true,
+      data: receipts
+    });
+  } catch (err) {
+    console.error('Error fetching receipts:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch receipts'
+    });
+  }
 });
 
 router.get("/lastReceiptNumber", (req, res) => {
