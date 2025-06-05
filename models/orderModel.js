@@ -201,14 +201,14 @@ const updateOrder = async (id, updatedOrder) => {
 };
 
 
-const updateInvoiceStatus = async (orderIds, invoiceNumber) => {
-  const sql = "UPDATE orders SET invoice_generated = 'Yes', invoice_number = ? WHERE id IN (?)";
-  return db.promise().query(sql, [invoiceNumber, orderIds]);
+const updateInvoiceStatus = async (orderNumbers, invoiceNumber) => {
+  const sql = "UPDATE orders SET invoice_generated = 'Yes', invoice_number = ? WHERE order_number IN (?)";
+  return db.promise().query(sql, [invoiceNumber, orderNumbers]);
 };
 
-const updateOrderStatusToDelivered = async (orderIds) => {
-  const sql = "UPDATE orders SET order_status = 'Delivered' WHERE id IN (?)";
-  return db.promise().query(sql, [orderIds]);
+const updateOrderStatusToDelivered = async (orderNumbers) => {
+  const sql = "UPDATE orders SET order_status = 'Delivered' WHERE order_number IN (?)";
+  return db.promise().query(sql, [orderNumbers]);
 };
 
 const getLatestInvoiceNumber = async () => {
@@ -218,10 +218,11 @@ const getLatestInvoiceNumber = async () => {
 };
 
 
-const updateEstimateStatus = async (orderIds, estimateNumber) => {
-  const sql = "UPDATE orders SET estimate_generated = 'Yes', estimate_number = ? WHERE id IN (?)";
-  return db.promise().query(sql, [estimateNumber, orderIds]);
+const updateEstimateStatus = async (orderNumbers, estimateNumber) => {
+  const sql = "UPDATE orders SET estimate_generated = 'Yes', estimate_number = ? WHERE order_number IN (?)";
+  return db.promise().query(sql, [estimateNumber, orderNumbers]);
 };
+
 
 const getLatestEstimateNumber = async () => {
   const sql = "SELECT estimate_number FROM orders ORDER BY estimate_number DESC LIMIT 1";

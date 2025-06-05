@@ -472,18 +472,18 @@ const updateOrderController = async (req, res) => {
 
 
 const updateInvoiceStatus = async (req, res) => {
-    const { orderIds, invoiceNumber } = req.body;
+    const { orderNumbers, invoiceNumber } = req.body;
 
-    if (!orderIds || orderIds.length === 0 || !invoiceNumber) {
+    if (!orderNumbers || orderNumbers.length === 0 || !invoiceNumber) {
         return res.status(400).json({ message: "Invalid request data" });
     }
 
     try {
         // Update invoice status and order status to Delivered
-        await OrderModel.updateInvoiceStatus(orderIds, invoiceNumber);
+        await OrderModel.updateInvoiceStatus(orderNumbers, invoiceNumber);
 
         // Also update order_status to 'Delivered'
-        await OrderModel.updateOrderStatusToDelivered(orderIds);
+        await OrderModel.updateOrderStatusToDelivered(orderNumbers);
 
         res.json({ message: "Invoice and order status updated successfully" });
     } catch (error) {
@@ -503,20 +503,21 @@ const getLatestInvoiceNumber = async (req, res) => {
 };
 
 const updateEstimateStatus = async (req, res) => {
-    const { orderIds, estimateNumber } = req.body;
+  const { orderNumbers, estimateNumber } = req.body;
 
-    if (!orderIds || orderIds.length === 0 || !estimateNumber) {
-        return res.status(400).json({ message: "Invalid request data" });
-    }
+  if (!orderNumbers || orderNumbers.length === 0 || !estimateNumber) {
+    return res.status(400).json({ message: "Invalid request data" });
+  }
 
-    try {
-        await OrderModel.updateEstimateStatus(orderIds, estimateNumber);
-        res.json({ message: "Estimate status updated successfully" });
-    } catch (error) {
-        console.error("Error updating Estimate status:", error);
-        res.status(500).json({ message: "Failed to update invoice status" });
-    }
+  try {
+    await OrderModel.updateEstimateStatus(orderNumbers, estimateNumber); // ✅ orderNumbers
+    res.json({ message: "Estimate status updated successfully" });
+  } catch (error) {
+    console.error("Error updating estimate status:", error);
+    res.status(500).json({ message: "Failed to update estimate status" });
+  }
 };
+
 
 const getLatestEstimateNumber = async (req, res) => {
     try {
