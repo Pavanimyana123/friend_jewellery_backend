@@ -1,28 +1,32 @@
 const Login = require("../models/loginModel");
 
 exports.login = (req, res) => {
-    const { email, password } = req.body;
+  const { email, mobile, password } = req.body;
 
-    Login.getUserByEmail(email, (err, user) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ message: "Internal Server Error" });
-        }
+  // Determine which field to use for lookup
+  const lookupField = email ? 'email' : 'mobile';
+  const lookupValue = email || mobile;
 
-        if (!user) {
-            return res.status(401).json({ message: "User not found" });
-        }
+  Login.getUserByEmailOrMobile(lookupField, lookupValue, (err, user) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
 
-        if (user.password !== password) {
-            return res.status(401).json({ message: "Invalid Credentials" });
-        }
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
 
-        // Remove password from response
-        delete user.password;
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Invalid Credentials" });
+    }
 
-        res.status(200).json({ 
-            message: "Login Successful", 
-            user 
-        });
+    // Remove password from response
+    delete user.password;
+
+    res.status(200).json({ 
+      message: "Login Successful", 
+      user 
     });
+  });
 };
