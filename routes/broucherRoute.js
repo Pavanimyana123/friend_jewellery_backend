@@ -33,15 +33,15 @@ const upload = multer({
 
 // 📤 POST: Add a new broucher
 router.post("/add-broucher-item", upload.single("file"), (req, res) => {
-    const { broucher_name, description, purity } = req.body;
+    const { broucher_name, description, purity, category } = req.body;
     const file_path = req.file ? req.file.filename : null;
 
     if (!broucher_name || !file_path) {
         return res.status(400).json({ error: "Product name and file are required" });
     }
 
-    const sql = `INSERT INTO brouchers (broucher_name, description, purity, file_path) VALUES (?, ?, ?, ?)`;
-    db.query(sql, [broucher_name, description,purity, file_path], (err, result) => {
+    const sql = `INSERT INTO brouchers (broucher_name, description, purity, category, file_path) VALUES (?, ?, ?, ?, ?)`;
+    db.query(sql, [broucher_name, description,purity,category, file_path], (err, result) => {
         if (err) {
             console.error("Database insert error:", err);
             return res.status(500).json({ error: "Database error while inserting" });
@@ -81,5 +81,44 @@ router.post("/delete-broucher-items", (req, res) => {
         res.status(200).json({ message: "brouchers items deleted successfully" });
     });
 });
+
+
+// GET all categories
+router.get('/categories', (req, res) => {
+  const query = 'SELECT * FROM categories ORDER BY created_at DESC';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching categories:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  });
+});
+
+// POST a new category
+router.post('/categories', (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Category name is required' });
+  }
+
+  const query = 'INSERT INTO categories (name) VALUES (?)';
+  db.query(query, [name], (err, result) => {
+    if (err) {
+      console.error('Error adding category:', err);
+      return res.status(500).json({ error: 'Could not add category' });
+    }
+
+    // Return the newly inserted category with id and timestamp
+    const selectQuery = 'SELECT * FROM categories WHERE id = ?';
+    db.query(selectQuery, [result.insertId], (err2, rows) => {
+      if (err2) {
+        return res.status(500).json({ error: 'Error fetching inserted category' });
+      }
+      res.status(201).json(rows[0]);
+    });
+  });
+});
+
 
 module.exports = router;
