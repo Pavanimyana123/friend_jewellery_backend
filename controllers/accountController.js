@@ -15,23 +15,29 @@ exports.createAccount = (req, res) => {
             return res.status(500).json({ error: "Database error" });
         }
 
-        // Email sending logic
-        const mailOptions = {
-            from: "manitejavadnala@gmail.com",
-            to: accountData.email,
-            subject: "Account Successfully Created",
-            text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${accountData.email}\nPassword: ${generatedPassword}\n\nBest Regards,\nNew Friend's Jewellery`,
-        };
+        // Check if email exists
+        if (accountData.email && accountData.email.trim() !== "") {
+            const mailOptions = {
+                from: "manitejavadnala@gmail.com",
+                to: accountData.email,
+                subject: "Account Successfully Created",
+                text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail/Mobile: ${accountData.email} or ${accountData.mobile}\nPassword: ${generatedPassword}\n\nBest Regards,\nNew Friend's Jewellery`,
+            };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error("Error sending email:", error);
-                return res.status(500).json({ error: "Account created but email failed to send." });
-            }
-            res.status(201).json({ message: "Account added successfully! Email sent.", accountId: result.insertId });
-        });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error("Error sending email:", error);
+                    return res.status(500).json({ error: "Account created but email failed to send." });
+                }
+                res.status(201).json({ message: "Account added successfully! Email sent.", accountId: result.insertId });
+            });
+        } else {
+            // No email provided
+            res.status(201).json({ message: "Account added successfully! No email sent.", accountId: result.insertId });
+        }
     });
 };
+
 
 
 exports.getAllAccounts = (req, res) => {
