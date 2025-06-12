@@ -99,7 +99,7 @@ exports.getOrderDetailsByInvoiceNumber = (req, res) => {
                 mc_on: row.mc_on,
                 mc_percentage: row.mc_percentage,
                 total_mc: row.total_mc,
-                tax_percentange: row.tax_percentange,
+                tax_percentage: row.tax_percentage,
                 tax_amount: row.tax_amount,
                 total_price: row.total_price,
                 remarks: row.remarks,

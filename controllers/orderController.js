@@ -76,15 +76,14 @@ const createOrder = async (req, res) => {
                 orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
                 orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
                 orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
-                parseFloat(orderData.tax_percentage) || 0, orderData.tax_amount || 0, orderData.total_price || 0,
+                orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
                 orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
                 imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
                 orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
                 orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
-                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_amount || 0,
+                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_amount || 0, 
                 orderData.balance_amt || 0, orderData.net_wt || 0,
-                orderData.summary_price || 0, orderData.summary_rate || 0,
-                actual_order_id
+                orderData.summary_price || 0, orderData.summary_rate || 0, actual_order_id
             ];
 
             return new Promise((resolve, reject) => {
@@ -104,10 +103,17 @@ const createOrder = async (req, res) => {
                                 overall_total_weight=?, overall_total_price=?, advance_gross_wt=?, fine_wt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?
                             WHERE actual_order_id=?
                         `;
-                        db.query(updateSql, values, (err, result) => {
+
+                        // Clone and modify values array: remove `actual_order_id` from SET part and push it only at the end for WHERE clause
+                        const updateValues = [...values];
+                        updateValues.splice(56, 1); // Remove the value at index 56 (actual_order_id in SET)
+                        updateValues.push(actual_order_id); // Add it to the end for WHERE clause
+
+                        db.query(updateSql, updateValues, (err, result) => {
                             if (err) reject(err);
                             else resolve(result);
                         });
+
                     } else {
                         // INSERT
                         const insertSql = `
@@ -117,7 +123,7 @@ const createOrder = async (req, res) => {
                                 gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
                                 total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
                                 remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
-                                overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, actual_order_id, balance_amt, net_wt, summary_price, summary_rate
+                                overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, balance_amt, net_wt, summary_price, summary_rate, actual_order_id
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         `;
                         db.query(insertSql, values, (err, result) => {
@@ -503,19 +509,19 @@ const getLatestInvoiceNumber = async (req, res) => {
 };
 
 const updateEstimateStatus = async (req, res) => {
-  const { orderNumbers, estimateNumber } = req.body;
+    const { orderNumbers, estimateNumber } = req.body;
 
-  if (!orderNumbers || orderNumbers.length === 0 || !estimateNumber) {
-    return res.status(400).json({ message: "Invalid request data" });
-  }
+    if (!orderNumbers || orderNumbers.length === 0 || !estimateNumber) {
+        return res.status(400).json({ message: "Invalid request data" });
+    }
 
-  try {
-    await OrderModel.updateEstimateStatus(orderNumbers, estimateNumber); // ✅ orderNumbers
-    res.json({ message: "Estimate status updated successfully" });
-  } catch (error) {
-    console.error("Error updating estimate status:", error);
-    res.status(500).json({ message: "Failed to update estimate status" });
-  }
+    try {
+        await OrderModel.updateEstimateStatus(orderNumbers, estimateNumber); // ✅ orderNumbers
+        res.json({ message: "Estimate status updated successfully" });
+    } catch (error) {
+        console.error("Error updating estimate status:", error);
+        res.status(500).json({ message: "Failed to update estimate status" });
+    }
 };
 
 
