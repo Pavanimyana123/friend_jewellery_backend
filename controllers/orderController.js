@@ -69,7 +69,7 @@ const createOrder = async (req, res) => {
                 orderData.city || "", orderData.pincode || "", orderData.state || "",
                 orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
                 orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date,
+                orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
                 orderData.metal || "", orderData.category || "", orderData.subcategory || "",
                 orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
                 orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
@@ -77,13 +77,13 @@ const createOrder = async (req, res) => {
                 orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
                 orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
                 orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
-                orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date,
+                orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
                 imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
                 orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
                 orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
-                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_amount || 0, 
-                orderData.balance_amt || 0, orderData.net_wt || 0,
-                orderData.summary_price || 0, orderData.summary_rate || 0, actual_order_id
+                orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
+                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
+                orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
             ];
 
             return new Promise((resolve, reject) => {
@@ -96,17 +96,18 @@ const createOrder = async (req, res) => {
                         const updateSql = `
                             UPDATE orders SET 
                                 account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
-                                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, product_design_name=?, purity=?,
-                                gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
+                                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, 
+                                product_design_name=?, purity=?,gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
                                 total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,
                                 remarks=?, delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?,
-                                overall_total_weight=?, overall_total_price=?, advance_gross_wt=?, fine_wt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?
+                                overall_total_weight=?, overall_total_price=?, overall_stone_price=?, overall_total_mc=?, overall_tax_amt=?, advance_gross_wt=?, 
+                                fine_wt=?, advance_finewt_amt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?, receipt_amt=?
                             WHERE actual_order_id=?
                         `;
 
                         // Clone and modify values array: remove `actual_order_id` from SET part and push it only at the end for WHERE clause
                         const updateValues = [...values];
-                        updateValues.splice(56, 1); // Remove the value at index 56 (actual_order_id in SET)
+                        updateValues.splice(61, 1); // Remove the value at index 61 (actual_order_id in SET)
                         updateValues.push(actual_order_id); // Add it to the end for WHERE clause
 
                         db.query(updateSql, updateValues, (err, result) => {
@@ -123,8 +124,10 @@ const createOrder = async (req, res) => {
                                 gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
                                 total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
                                 remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
-                                overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, balance_amt, net_wt, summary_price, summary_rate, actual_order_id
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                overall_total_weight, overall_total_price, overall_stone_price, overall_total_mc, overall_tax_amt, 
+                                advance_gross_wt, fine_wt, advance_finewt_amt, advance_amount, balance_amt, net_wt, summary_price, 
+                                summary_rate,receipt_amt, actual_order_id
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         `;
                         db.query(insertSql, values, (err, result) => {
                             if (err) reject(err);

@@ -34,7 +34,7 @@ router.post('/receipts', async (req, res) => {
 
     /* 3️⃣ update order */
     await db.promise().query(
-      'UPDATE orders SET receipt_amt = ?, bal_after_receipt = ? WHERE order_number = ?',
+      'UPDATE orders SET receipt_amt = ?, balance_amt = ? WHERE order_number = ?',
       [newReceiptAmt, newBalAfterReceipt, order_number]
     );
 

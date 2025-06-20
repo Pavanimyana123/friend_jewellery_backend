@@ -13,6 +13,7 @@ const galleryRoutes = require("./routes/galleryRoutes");
 const broucherRoutes = require("./routes/broucherRoute");
 const receiptRoutes = require("./routes/receiptRoute");
 const uniqueOrderRoutes = require("./routes/uniqueOrderRoutes");
+const smsRoutes = require("./routes/smsRoutes");
 
 const app = express();
 const PORT = 5001;
@@ -35,6 +36,7 @@ app.use("/api", galleryRoutes);
 app.use("/api", broucherRoutes);
 app.use("/api", receiptRoutes);
 app.use("/", uniqueOrderRoutes);
+app.use("/", smsRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

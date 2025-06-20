@@ -19,8 +19,9 @@ const createOrder = (orderData, callback) => {
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
         total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
         remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
-        overall_total_weight, overall_total_price, advance_gross_wt, fine_wt, advance_amount, actual_order_id, balance_amt, net_wt, summary_price, summary_rate
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        overall_total_weight, overall_total_price, overall_stone_price, overall_total_mc, overall_tax_amt, advance_gross_wt, 
+        fine_wt, advance_finewt_amt, advance_amount, balance_amt, net_wt, summary_price, summary_rate, receipt_amt, actual_order_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   db.query(sql, orderData, callback);
 };
