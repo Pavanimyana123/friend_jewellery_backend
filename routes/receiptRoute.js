@@ -11,7 +11,7 @@ router.post('/receipts', async (req, res) => {
       order_number, total_amt, paid_amt, bal_amt
     } = req.body;
 
-    /* 1️⃣ insert receipt */
+    /* 1️⃣ Insert receipt */
     await db.promise().query(
       `INSERT INTO receipts
        (date, receipt_no, mobile, account_name, order_number, total_amt, paid_amt, bal_amt)
@@ -19,31 +19,35 @@ router.post('/receipts', async (req, res) => {
       [date, receipt_no, mobile, account_name, order_number, total_amt, paid_amt, bal_amt]
     );
 
-    /* 2️⃣ fetch current amounts */
+    /* 2️⃣ Fetch current amounts */
     const [rows] = await db.promise().query(
       'SELECT receipt_amt, balance_amt FROM orders WHERE order_number = ?',
       [order_number]
     );
+
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
 
     const currentReceipt = parseFloat(rows[0].receipt_amt || 0);
-    const balanceAmt     = parseFloat(rows[0].balance_amt || 0);
+    const balanceAmt     = parseFloat(bal_amt);
+    const paidAmount     = parseFloat(paid_amt);
 
-    const newReceiptAmt      = currentReceipt + parseFloat(paid_amt);
-    const newBalAfterReceipt = balanceAmt - newReceiptAmt;
+    const newReceiptAmt  = currentReceipt + paidAmount;
+    const newBalanceAmt  = balanceAmt - newReceiptAmt;
 
-    /* 3️⃣ update order */
+    /* 3️⃣ Update order */
     await db.promise().query(
       'UPDATE orders SET receipt_amt = ?, balance_amt = ? WHERE order_number = ?',
-      [newReceiptAmt, newBalAfterReceipt, order_number]
+      [newReceiptAmt, balanceAmt, order_number]
     );
 
     res.json({ message: 'Receipt added and order updated' });
+    
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-}); 
+});
+
 
 // Simple GET API to fetch all receipts
 router.get('/receipts', async (req, res) => {

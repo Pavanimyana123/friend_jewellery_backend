@@ -33,7 +33,7 @@ router.post('/send-otp', async (req, res) => {
 
   // Send SMS
   const message = `Dear Customer, Your OTP number is ${otp}, Do not share it with anyone - FRIENDS JEWELLERS`;
-  const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${process.env.SMS_USERNAME}&pass=${process.env.SMS_PASSWORD}&senderid=${process.env.SMS_SENDERID}&dest_mobileno=${mobile}&message=${encodeURIComponent(message)}&dltentityid=${process.env.SMS_ENTITYID}&dlttempid=${process.env.SMS_TEMPLATEID}&response=Y`;
+  const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${process.env.SMS_USERNAME}&pass=${process.env.SMS_PASSWORD}&senderid=${process.env.SMS_SENDERID}&dest_mobileno=${mobile}&message=${encodeURIComponent(message)}&dltentityid=${process.env.SMS_ENTITYID}&dlttempid=${process.env.SMS_OTPTEMPLATEID}&response=Y`;
 
   try {
     const smsResponse = await axios.get(smsUrl);

@@ -26,7 +26,6 @@ const createOrder = (orderData, callback) => {
   db.query(sql, orderData, callback);
 };
 
-
 const getAllOrders = (callback) => {
   const sql = "SELECT * FROM orders";
   db.query(sql, callback);
@@ -55,22 +54,21 @@ const updateOrderStatus = (orderId, order_status, callback) => {
 //   db.query(sql, [work_status, orderId], callback);
 // };
 
-const updateWorkStatus = (orderId, work_status, order_status, callback) => {
-  let sql, params;
+const updateWorkStatus = (orderId, work_status, order_status, worker_comment, callback) => {
+    let sql, params;
 
-  if (order_status) {
-      // Update both work_status and order_status
-      sql = `UPDATE orders SET work_status = ?, order_status = ? WHERE id = ?`;
-      params = [work_status, order_status, orderId];
-  } else {
-      // Update only work_status
-      sql = `UPDATE orders SET work_status = ? WHERE id = ?`;
-      params = [work_status, orderId];
-  }
+    if (order_status) {
+        // Update work_status, order_status, and worker_comment
+        sql = `UPDATE orders SET work_status = ?, order_status = ?, worker_comment = ? WHERE id = ?`;
+        params = [work_status, order_status, worker_comment, orderId];
+    } else {
+        // Update work_status and worker_comment
+        sql = `UPDATE orders SET work_status = ?, worker_comment = ? WHERE id = ?`;
+        params = [work_status, worker_comment, orderId];
+    }
 
-  db.query(sql, params, callback);
+    db.query(sql, params, callback);
 };
-
 
 const updateAssignedStatus = (orderId, assigned_status, callback) => {
   const sql = `UPDATE orders SET assigned_status = ? WHERE id = ?`;
@@ -114,7 +112,6 @@ const updateStatus = (orderId, callback) => {
   db.query(sql, [orderId], callback);
 };
 
-// Insert a new order with requested_design_name
 const insertNewOrder = (order, callback) => {
   const sql = `
       INSERT INTO orders 
@@ -201,7 +198,6 @@ const updateOrder = async (id, updatedOrder) => {
   }
 };
 
-
 const updateInvoiceStatus = async (orderNumbers, invoiceNumber) => {
   const sql = "UPDATE orders SET invoice_generated = 'Yes', invoice_number = ? WHERE order_number IN (?)";
   return db.promise().query(sql, [invoiceNumber, orderNumbers]);
@@ -218,19 +214,16 @@ const getLatestInvoiceNumber = async () => {
   return rows.length > 0 ? rows[0].invoice_number : null;
 };
 
-
 const updateEstimateStatus = async (orderNumbers, estimateNumber) => {
   const sql = "UPDATE orders SET estimate_generated = 'Yes', estimate_number = ? WHERE order_number IN (?)";
   return db.promise().query(sql, [estimateNumber, orderNumbers]);
 };
-
 
 const getLatestEstimateNumber = async () => {
   const sql = "SELECT estimate_number FROM orders ORDER BY estimate_number DESC LIMIT 1";
   const [rows] = await db.promise().query(sql);
   return rows.length > 0 ? rows[0].estimate_number : null;
 };
-
 
 const deleteOrderByOrderNumber = (orderNumber, callback) => {
   const sql = "DELETE FROM orders WHERE order_number = ?";
@@ -241,12 +234,6 @@ const deleteOrderByOrderNumber = (orderNumber, callback) => {
     callback(null, result);
   });
 };
-
-
-
-
-
-
 
 module.exports = {
   getLastOrderNumber,

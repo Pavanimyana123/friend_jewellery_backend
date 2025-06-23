@@ -2,6 +2,10 @@ const fs = require("fs");
 const OrderModel = require("../models/orderModel");
 const db = require("../db");
 const transporter = require('../emailConfig');
+const dotenv = require('dotenv');
+const axios = require('axios');
+
+dotenv.config();
 
 const getLastOrderNumber = (req, res) => {
     OrderModel.getLastOrderNumber((err, result) => {
@@ -147,8 +151,6 @@ const createOrder = async (req, res) => {
     }
 };
 
-
-
 const getAllOrders = (req, res) => {
     OrderModel.getAllOrders((err, results) => {
         if (err) {
@@ -222,9 +224,9 @@ const updateStatus = (req, res) => {
 //     });
 // };
 
-const updateWorkStatus = (req, res) => {
+const updateWorkStatus = async (req, res) => {
     const { orderId } = req.params;
-    const { work_status } = req.body;
+    const { work_status, subcategory, mobile, worker_comment, order_number } = req.body;
 
     let order_status = null;
     if (work_status === "In Progress" || work_status === "Hold") {
@@ -233,18 +235,55 @@ const updateWorkStatus = (req, res) => {
         order_status = "Ready for Delivery";
     }
 
-    OrderModel.updateWorkStatus(orderId, work_status, order_status, (err, result) => {
-        if (err) {
-            console.error("Error updating work status:", err);
-            return res.status(500).json({ error: "Database error" });
+    try {
+
+        await new Promise((resolve, reject) => {
+            OrderModel.updateWorkStatus(orderId, work_status, order_status, worker_comment, (err, result) => {
+                if (err) return reject(err);
+                if (result.affectedRows === 0) return reject({ notFound: true });
+                resolve();
+            });
+        });
+
+
+        if (work_status === "Completed") {
+
+            const orderMobile = mobile;
+            const orderSubcategory = subcategory;
+            const orderNumber = order_number;
+
+            // Validate mobile number format
+            if (!/^[6-9]\d{9}$/.test(orderMobile)) {
+                console.warn("⚠️ Invalid mobile format, skipping SMS:", orderMobile);
+            } else {
+                const message = `Dear Customer, Order id: ${orderNumber} Item: ${orderSubcategory} is ready to deliver - FRIENDS JEWELLERS`;
+
+                const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${encodeURIComponent(process.env.SMS_USERNAME)}&pass=${encodeURIComponent(process.env.SMS_PASSWORD)}&senderid=${process.env.SMS_SENDERID}&dest_mobileno=${orderMobile}&message=${encodeURIComponent(message)}&dltentityid=${process.env.SMS_ENTITYID}&dlttempid=${process.env.SMS_ORDERTEMPLATEID}&response=Y`;
+
+                try {
+                    const smsResponse = await axios.get(smsUrl);
+                    // console.log("📤 SMS Sent. URL:", smsUrl);
+                    // console.log("📨 SMS Gateway Response:", smsResponse.data);
+
+                    if (!smsResponse.data.toLowerCase().includes("success")) {
+                        console.warn("⚠️ SMS response didn't confirm success:", smsResponse.data);
+                    }
+                } catch (smsError) {
+                    console.error("❌ SMS sending failed:", smsError.response?.data || smsError.message);
+                }
+            }
         }
-        if (result.affectedRows === 0) {
+
+        return res.status(200).json({ message: "Work status updated successfully" });
+
+    } catch (err) {
+        if (err.notFound) {
             return res.status(404).json({ error: "Order not found" });
         }
-        res.status(200).json({ message: "Work status updated successfully" });
-    });
+        console.error("Error updating work status:", err);
+        return res.status(500).json({ error: "Database error" });
+    }
 };
-
 
 const updateAssignedStatus = (req, res) => {
     const { orderId } = req.params;
@@ -278,7 +317,6 @@ const updateAssignedStatus = (req, res) => {
 //         res.status(200).json({ message: "Order cancellation requested successfully" });
 //     });
 // };
-
 
 const requestCancel = (req, res) => {
     const { orderId } = req.params;
@@ -322,7 +360,6 @@ Please review this request in the admin dashboard.
         res.status(200).json({ message: "Order cancellation requested successfully" });
     });
 };
-
 
 const handleCancelRequest = (req, res) => {
     const { orderId } = req.params;
@@ -479,7 +516,6 @@ const updateOrderController = async (req, res) => {
 //     }
 // };
 
-
 const updateInvoiceStatus = async (req, res) => {
     const { orderNumbers, invoiceNumber } = req.body;
 
@@ -526,7 +562,6 @@ const updateEstimateStatus = async (req, res) => {
         res.status(500).json({ message: "Failed to update estimate status" });
     }
 };
-
 
 const getLatestEstimateNumber = async (req, res) => {
     try {
