@@ -9,6 +9,95 @@ const router = express.Router();
 // Temporary in-memory storage (in production, store OTPs in DB or Redis)
 const otpStore = new Map(); // { mobile: { otp, expiresAt } }
 
+// SMS configuration
+const SMS_CONFIG = {
+  username: process.env.SMS_USERNAME || 'friendsjewellers',
+  password: process.env.SMS_PASSWORD || 'user@123',
+  senderId: process.env.SMS_SENDERID || 'FRNJEW',
+  entityId: process.env.SMS_ENTITYID || '1101383680000087435',
+  // Template IDs based on message type
+  templateIds: {
+    cust_reg: process.env.SMS_REGISTRATIONTEMPLATEID || '1107175681528365074',
+    app_download: process.env.SMS_ORDERTEMPLATEID || '1107175024829366753',
+    default: process.env.SMS_OTPTEMPLATEID || '1107175024835612317'
+  }
+};
+
+// SMS sending function
+async function sendSMS(phoneNumber, message, templateType = 'default') {
+  try {
+    // Prepare the request payload for SMSJust API
+    const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${SMS_CONFIG.username}&pass=${SMS_CONFIG.password}&senderid=${SMS_CONFIG.senderId}&dest_mobileno=${phoneNumber.replace(/\D/g, '')}&message=${encodeURIComponent(message)}&dltentityid=${SMS_CONFIG.entityId}&dlttempid=${SMS_CONFIG.templateIds[templateType] || SMS_CONFIG.templateIds.default}&response=Y`;
+
+    const response = await axios.get(smsUrl);
+    
+    return {
+      success: true,
+      messageId: response.data || null
+    };
+  } catch (error) {
+    console.error('SMS sending error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// API endpoint to send SMS to multiple numbers
+router.post('/send-sms', async (req, res) => {
+  const { phoneNumbers, message, template } = req.body;
+
+  // Validate request
+  if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+    return res.status(400).json({ error: 'Phone numbers array is required' });
+  }
+
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const results = [];
+    let sentCount = 0;
+
+    // Send SMS to each phone number
+    for (const phoneNumber of phoneNumbers) {
+      // Basic phone number validation
+      if (!phoneNumber || phoneNumber.replace(/\D/g, '').length < 10) {
+        results.push({
+          phoneNumber,
+          success: false,
+          error: 'Invalid phone number'
+        });
+        continue;
+      }
+
+      const result = await sendSMS(phoneNumber, message, template);
+      if (result.success) {
+        sentCount++;
+      }
+      
+      results.push({
+        phoneNumber,
+        success: result.success,
+        messageId: result.messageId,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      sentCount,
+      totalCount: phoneNumbers.length,
+      results
+    });
+  } catch (error) {
+    console.error('Error in send-sms endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Generate and send OTP
 router.post('/send-otp', async (req, res) => {
   const { mobile } = req.body;
@@ -31,14 +120,18 @@ router.post('/send-otp', async (req, res) => {
   const expiresAt = Date.now() + 5 * 60 * 1000;
   otpStore.set(mobile, { otp, expiresAt });
 
-  // Send SMS
+  // Send SMS using the sendSMS function
   const message = `Dear Customer, Your OTP number is ${otp}, Do not share it with anyone - FRIENDS JEWELLERS`;
-  const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${process.env.SMS_USERNAME}&pass=${process.env.SMS_PASSWORD}&senderid=${process.env.SMS_SENDERID}&dest_mobileno=${mobile}&message=${encodeURIComponent(message)}&dltentityid=${process.env.SMS_ENTITYID}&dlttempid=${process.env.SMS_OTPTEMPLATEID}&response=Y`;
-
+  
   try {
-    const smsResponse = await axios.get(smsUrl);
-    // console.log('SMS Sent:', smsResponse.data);
-    return res.json({ message: 'OTP sent successfully' });
+    const result = await sendSMS(mobile, message, 'default');
+    
+    if (result.success) {
+      return res.json({ message: 'OTP sent successfully' });
+    } else {
+      console.error('Failed to send SMS:', result.error);
+      return res.status(500).json({ message: 'Failed to send OTP' });
+    }
   } catch (error) {
     console.error('Failed to send SMS:', error);
     return res.status(500).json({ message: 'Failed to send OTP' });
@@ -74,7 +167,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   // OTP is valid – return user data
- const rows = await db.query('SELECT * FROM account_details WHERE mobile = ?', [mobile]);
+  const rows = await db.query('SELECT * FROM account_details WHERE mobile = ?', [mobile]);
 
   if (rows.length === 0) {
     return res.status(404).json({ message: 'User not found' });

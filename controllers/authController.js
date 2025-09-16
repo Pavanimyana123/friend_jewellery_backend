@@ -1,6 +1,6 @@
 const otpStore = new Map();
 const transporter = require('../emailConfig');
-const EMAIL_FROM ='manitejavadnala@gmail.com';
+const EMAIL_FROM ='friendsjewelleryldk@gmail.com';
 
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();

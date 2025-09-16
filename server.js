@@ -56,8 +56,8 @@ db.connect((err) => {
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: "manitejavadnala@gmail.com", // Use your email
-        pass: "fppo lbmw edaf macr",  // Use an App Password if using Gmail
+        user: "friendsjewelleryldk@gmail.com", // Use your email
+        pass: "pwum tufa shyr flce",  // Use an App Password if using Gmail
     },
 });
 
@@ -99,7 +99,7 @@ app.post("/add-account", (req, res) => {
 
         // Prepare email
         const mailOptions = {
-            from: "manitejavadnala@gmail.com",
+            from: "friendsjewelleryldk@gmail.com",
             to: email,
             subject: "Account Successfully Created",
             text: `Hello ${account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail: ${email}\nPassword: ${password}\n\nBest Regards,\nNew Friend's Jewellery`,

@@ -18,7 +18,7 @@ exports.createAccount = (req, res) => {
         // Check if email exists
         if (accountData.email && accountData.email.trim() !== "") {
             const mailOptions = {
-                from: "manitejavadnala@gmail.com",
+                from: "friendsjewelleryldk@gmail.com",
                 to: accountData.email,
                 subject: "Account Successfully Created",
                 text: `Hello ${accountData.account_name},\n\nYour account has been successfully created.\n\nYour login credentials:\nEmail/Mobile: ${accountData.email} or ${accountData.mobile}\nPassword: ${generatedPassword}\n\nBest Regards,\nNew Friend's Jewellery`,

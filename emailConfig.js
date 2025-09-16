@@ -3,8 +3,8 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: "manitejavadnala@gmail.com", 
-        pass: "fppo lbmw edaf macr", 
+        user: "friendsjewelleryldk@gmail.com", 
+        pass: "pwum tufa shyr flce", 
     },
 });
 
@@ -16,7 +16,7 @@ module.exports = transporter;
 // const transporter = nodemailer.createTransport({
 //     service: "gmail",
 //     auth: {
-//         user: process.env.EMAIL_USER || "manitejavadnala@gmail.com",
+//         user: process.env.EMAIL_USER || "friendsjewelleryldk@gmail.com",
 //         pass: process.env.EMAIL_PASSWORD, // Always use environment variables for passwords
 //     },
 // });
