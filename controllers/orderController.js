@@ -30,126 +30,360 @@ const getLastOrderNumber = (req, res) => {
     });
 };
 
+// const createOrder = async (req, res) => {
+//     try {
+//         if (!req.body.order) {
+//             return res.status(400).json({ error: "Missing 'order' field in request body" });
+//         }
+
+//         const orders = Array.isArray(req.body.order) ? req.body.order : [req.body.order];
+
+//         // Fetch the current max actual_order_id
+//         const rows = await new Promise((resolve, reject) => {
+//             db.query("SELECT MAX(CAST(actual_order_id AS UNSIGNED)) AS maxId FROM orders", (err, results) => {
+//                 if (err) reject(err);
+//                 else resolve(results);
+//             });
+//         });
+
+//         // ✅ Get maxId from results[0] not rows
+//         const maxId = rows[0]?.maxId || 0;
+//         let currentActualId = parseInt(maxId, 10) || 0;
+//         // console.log("🔎 Current Max actual_order_id from DB =", currentActualId);
+
+//         const queries = orders.map(async (orderStr, index) => {
+//             const orderData = JSON.parse(orderStr);
+//             // console.log("orderData=", orderData)
+//             let imageUrl = null;
+//             let imageFile = req.files?.[index];
+
+//             // Handle base64 or file upload
+//             if (orderData.imagePreview && orderData.imagePreview.startsWith("data:image")) {
+//                 const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
+//                 const imageBuffer = Buffer.from(base64Data, "base64");
+//                 const imageName = `uploads/${Date.now()}.png`;
+//                 fs.writeFileSync(imageName, imageBuffer);
+//                 imageUrl = `/${imageName}`;
+//             } else if (imageFile) {
+//                 imageUrl = `/uploads/${imageFile.filename}`;
+//             }
+
+//             // Use provided actual_order_id if any, else generate new
+//             const actual_order_id = orderData.actual_order_id || ++currentActualId;
+//             // console.log("✅ New actual_order_id =", actual_order_id);
+
+
+//             const values = [
+//                 orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
+//                 orderData.email || "", orderData.address1 || "", orderData.address2 || "",
+//                 orderData.city || "", orderData.pincode || "", orderData.state || "",
+//                 orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
+//                 orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
+//                 orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
+//                 orderData.metal || "", orderData.category || "", orderData.subcategory || "",
+//                 orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
+//                 orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
+//                 orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
+//                 orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
+//                 orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
+//                 orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
+//                 orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
+//                 imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
+//                 orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
+//                 orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
+//                 orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
+//                 orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
+//                 orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
+//             ];
+
+//             return new Promise((resolve, reject) => {
+//                 // First check if actual_order_id already exists
+//                 db.query("SELECT 1 FROM orders WHERE actual_order_id = ?", [actual_order_id], (err, result) => {
+//                     if (err) return reject(err);
+
+//                     if (result.length > 0) {
+//                         // UPDATE
+//                         const updateSql = `
+//                             UPDATE orders SET 
+//                                 account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
+//                                 aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, 
+//                                 product_design_name=?, purity=?,gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
+//                                 total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,
+//                                 remarks=?, delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?,
+//                                 overall_total_weight=?, overall_total_price=?, overall_stone_price=?, overall_total_mc=?, overall_tax_amt=?, advance_gross_wt=?, 
+//                                 fine_wt=?, advance_finewt_amt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?, receipt_amt=?
+//                             WHERE actual_order_id=?
+//                         `;
+
+//                         // Clone and modify values array: remove `actual_order_id` from SET part and push it only at the end for WHERE clause
+//                         const updateValues = [...values];
+//                         updateValues.splice(61, 1); // Remove the value at index 61 (actual_order_id in SET)
+//                         updateValues.push(actual_order_id); // Add it to the end for WHERE clause
+
+//                         db.query(updateSql, updateValues, (err, result) => {
+//                             if (err) reject(err);
+//                             else resolve(result);
+//                         });
+
+//                     } else {
+//                         // INSERT
+//                         const insertSql = `
+//                             INSERT INTO orders (
+//                                 account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+//                                 aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
+//                                 gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+//                                 total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+//                                 remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
+//                                 overall_total_weight, overall_total_price, overall_stone_price, overall_total_mc, overall_tax_amt, 
+//                                 advance_gross_wt, fine_wt, advance_finewt_amt, advance_amount, balance_amt, net_wt, summary_price, 
+//                                 summary_rate,receipt_amt, actual_order_id
+//                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//                         `;
+//                         db.query(insertSql, values, (err, result) => {
+//                             if (err) reject(err);
+//                             else resolve(result);
+//                         });
+//                     }
+//                 });
+//             });
+//         });
+
+//         await Promise.all(queries);
+
+//         const firstOrder = JSON.parse(orders[0]);
+//         // if (firstOrder.mobile && firstOrder.order_number) {
+//         //     try {
+//         //         const smsText = `Dear Customer, Your Order No. ${firstOrder.order_number} for ${firstOrder.subcategory} has been successfully placed. Thank you for choosing - New Friends Jewellers`;
+
+//         //         const url = "https://www.smsjust.com/blank/sms/user/urlsms.php";
+//         //         const params = {
+//         //             username: process.env.SMS_USERNAME,
+//         //             pass: process.env.SMS_PASSWORD,
+//         //             senderid: process.env.SMS_SENDERID,
+//         //             dest_mobileno: firstOrder.mobile,
+//         //             message: encodeURIComponent(smsText), // ✅ URL-encode message
+//         //             entityid: process.env.SMS_ENTITYID,
+//         //             dlttempid: process.env.SMS_ORDERCONFIRMEDTEMPLATEID,
+//         //             response: "Y" // ✅ Added this
+//         //         };
+
+//         //         // 🔎 Console log final URL for debugging
+//         //         const finalUrl = `${url}?${Object.entries(params)
+//         //             .map(([k, v]) => `${k}=${v}`)
+//         //             .join("&")}`;
+
+//         //         // console.log("📡 Final SMS API URL:", finalUrl);
+
+//         //         const response = await axios.get(finalUrl); // ✅ Directly use final URL
+
+//         //         // console.log("✅ SMS sent successfully to:", firstOrder.mobile);
+//         //         // console.log("📨 SMS API Response:", response.data);
+//         //     } catch (smsError) {
+//         //         console.error("❌ Failed to send SMS:", smsError.message);
+//         //     }
+//         // }
+
+//         if (firstOrder.mobile && firstOrder.order_number) {
+//             try {
+//                 // ✅ Build new SMS text in your desired format
+//                 const smsText = `Dear ${firstOrder.account_name || "Customer"}, We have received your order.
+// Order no: ${firstOrder.order_number}
+// Item: ${firstOrder.subcategory} (${firstOrder.purity || "22 carats"})
+// Est Wt: ${firstOrder.total_weight_aw || "N/A"} grams
+// Est Delivery Date: ${firstOrder.estimated_delivery_date || "N/A"}
+// Thank you
+// New Friends Jewellers`;
+
+//                 const url = "https://www.smsjust.com/blank/sms/user/urlsms.php";
+//                 const params = {
+//                     username: process.env.SMS_USERNAME || "friendsjewellers",
+//                     pass: process.env.SMS_PASSWORD || "user@123",
+//                     senderid: process.env.SMS_SENDERID || "FRNJEW",
+//                     dest_mobileno: firstOrder.mobile,
+//                     message: encodeURIComponent(smsText), // ✅ Encode message text
+//                     dltentityid: process.env.SMS_ENTITYID || "1101383680000087435",
+//                     dlttempid: process.env.SMS_ORDERCONFIRMEDTEMPLATEID || "1107176042640547916",
+//                     response: "Y",
+//                 };
+
+//                 // ✅ Construct final URL
+//                 const finalUrl = `${url}?${Object.entries(params)
+//                     .map(([k, v]) => `${k}=${v}`)
+//                     .join("&")}`;
+
+//                 // console.log("📡 Final SMS API URL:", finalUrl);
+
+//                 const response = await axios.get(finalUrl);
+//                 // console.log("✅ SMS sent successfully to:", firstOrder.mobile);
+//                 // console.log("📨 SMS API Response:", response.data);
+//             } catch (smsError) {
+//                 console.error("❌ Failed to send SMS:", smsError.message);
+//             }
+//         }
+
+
+//         res.status(201).json({ message: "All orders processed successfully", insertedOrUpdated: orders.length });
+
+//     } catch (error) {
+//         console.error("Error processing order:", error);
+//         res.status(400).json({ error: "Invalid request format", details: error.message });
+//     }
+// };
+
 const createOrder = async (req, res) => {
-    try {
-        if (!req.body.order) {
-            return res.status(400).json({ error: "Missing 'order' field in request body" });
-        }
-
-        const orders = Array.isArray(req.body.order) ? req.body.order : [req.body.order];
-
-        // Fetch the current max actual_order_id
-        const [rows] = await new Promise((resolve, reject) => {
-            db.query("SELECT MAX(actual_order_id) AS maxId FROM orders", (err, results) => {
-                if (err) reject(err);
-                else resolve(results);
-            });
-        });
-
-        let currentActualId = parseInt(rows.maxId, 10) || 0;
-
-        const queries = orders.map(async (orderStr, index) => {
-            const orderData = JSON.parse(orderStr);
-            let imageUrl = null;
-            let imageFile = req.files?.[index];
-
-            // Handle base64 or file upload
-            if (orderData.imagePreview && orderData.imagePreview.startsWith("data:image")) {
-                const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
-                const imageBuffer = Buffer.from(base64Data, "base64");
-                const imageName = `uploads/${Date.now()}.png`;
-                fs.writeFileSync(imageName, imageBuffer);
-                imageUrl = `/${imageName}`;
-            } else if (imageFile) {
-                imageUrl = `/uploads/${imageFile.filename}`;
-            }
-
-            // Use provided actual_order_id if any, else generate new
-            const actual_order_id = orderData.actual_order_id || ++currentActualId;
-
-            const values = [
-                orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
-                orderData.email || "", orderData.address1 || "", orderData.address2 || "",
-                orderData.city || "", orderData.pincode || "", orderData.state || "",
-                orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
-                orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
-                orderData.metal || "", orderData.category || "", orderData.subcategory || "",
-                orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
-                orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
-                orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
-                orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
-                orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
-                orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
-                orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
-                imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
-                orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
-                orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
-                orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
-                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
-                orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
-            ];
-
-            return new Promise((resolve, reject) => {
-                // First check if actual_order_id already exists
-                db.query("SELECT 1 FROM orders WHERE actual_order_id = ?", [actual_order_id], (err, result) => {
-                    if (err) return reject(err);
-
-                    if (result.length > 0) {
-                        // UPDATE
-                        const updateSql = `
-                            UPDATE orders SET 
-                                account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
-                                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, 
-                                product_design_name=?, purity=?,gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
-                                total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,
-                                remarks=?, delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?,
-                                overall_total_weight=?, overall_total_price=?, overall_stone_price=?, overall_total_mc=?, overall_tax_amt=?, advance_gross_wt=?, 
-                                fine_wt=?, advance_finewt_amt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?, receipt_amt=?
-                            WHERE actual_order_id=?
-                        `;
-
-                        // Clone and modify values array: remove `actual_order_id` from SET part and push it only at the end for WHERE clause
-                        const updateValues = [...values];
-                        updateValues.splice(61, 1); // Remove the value at index 61 (actual_order_id in SET)
-                        updateValues.push(actual_order_id); // Add it to the end for WHERE clause
-
-                        db.query(updateSql, updateValues, (err, result) => {
-                            if (err) reject(err);
-                            else resolve(result);
-                        });
-
-                    } else {
-                        // INSERT
-                        const insertSql = `
-                            INSERT INTO orders (
-                                account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-                                aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
-                                gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
-                                total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
-                                remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
-                                overall_total_weight, overall_total_price, overall_stone_price, overall_total_mc, overall_tax_amt, 
-                                advance_gross_wt, fine_wt, advance_finewt_amt, advance_amount, balance_amt, net_wt, summary_price, 
-                                summary_rate,receipt_amt, actual_order_id
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        `;
-                        db.query(insertSql, values, (err, result) => {
-                            if (err) reject(err);
-                            else resolve(result);
-                        });
-                    }
-                });
-            });
-        });
-
-        await Promise.all(queries);
-        res.status(201).json({ message: "All orders processed successfully", insertedOrUpdated: orders.length });
-
-    } catch (error) {
-        console.error("Error processing order:", error);
-        res.status(400).json({ error: "Invalid request format", details: error.message });
+  try {
+    if (!req.body.order) {
+      return res.status(400).json({ error: "Missing 'order' field in request body" });
     }
+
+    const orders = Array.isArray(req.body.order) ? req.body.order : [req.body.order];
+
+    // Fetch current max actual_order_id
+    const rows = await new Promise((resolve, reject) => {
+      db.query("SELECT MAX(CAST(actual_order_id AS UNSIGNED)) AS maxId FROM orders", (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
+    const maxId = rows[0]?.maxId || 0;
+    let currentActualId = parseInt(maxId, 10) || 0;
+
+    // Flag to know if any new order was inserted
+    let isNewOrderInserted = false;
+    let firstOrderData = null;
+
+    const queries = orders.map(async (orderStr, index) => {
+      const orderData = JSON.parse(orderStr);
+      let imageUrl = null;
+      let imageFile = req.files?.[index];
+
+      // Handle image (base64 or file upload)
+      if (orderData.imagePreview && orderData.imagePreview.startsWith("data:image")) {
+        const base64Data = orderData.imagePreview.replace(/^data:image\/\w+;base64,/, "");
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        const imageName = `uploads/${Date.now()}.png`;
+        fs.writeFileSync(imageName, imageBuffer);
+        imageUrl = `/${imageName}`;
+      } else if (imageFile) {
+        imageUrl = `/uploads/${imageFile.filename}`;
+      }
+
+      const actual_order_id = orderData.actual_order_id || ++currentActualId;
+
+      const values = [
+        orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
+        orderData.email || "", orderData.address1 || "", orderData.address2 || "",
+        orderData.city || "", orderData.pincode || "", orderData.state || "",
+        orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
+        orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
+        orderData.order_number || "", orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
+        orderData.metal || "", orderData.category || "", orderData.subcategory || "",
+        orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
+        orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
+        orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
+        orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
+        orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
+        orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
+        orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
+        imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
+        orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
+        orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
+        orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
+        orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
+        orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
+      ];
+
+      return new Promise((resolve, reject) => {
+        db.query("SELECT 1 FROM orders WHERE actual_order_id = ?", [actual_order_id], (err, result) => {
+          if (err) return reject(err);
+
+          if (result.length > 0) {
+            // ✅ UPDATE
+            const updateSql = `
+              UPDATE orders SET 
+                account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
+                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, estimated_delivery_date=?, metal=?, category=?, subcategory=?, 
+                product_design_name=?, purity=?, gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
+                total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,
+                remarks=?, delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?,
+                overall_total_weight=?, overall_total_price=?, overall_stone_price=?, overall_total_mc=?, overall_tax_amt=?, advance_gross_wt=?, 
+                fine_wt=?, advance_finewt_amt=?, advance_amount=?, balance_amt=?, net_wt=?, summary_price=?, summary_rate=?, receipt_amt=?
+              WHERE actual_order_id=?`;
+            
+            const updateValues = [...values];
+            updateValues.splice(61, 1); // remove duplicate actual_order_id in SET
+            updateValues.push(actual_order_id);
+
+            db.query(updateSql, updateValues, (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            });
+
+          } else {
+            // ✅ INSERT
+            const insertSql = `
+              INSERT INTO orders (
+                account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
+                aadhar_card, gst_in, pan_card, date, order_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
+                gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
+                total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
+                remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
+                overall_total_weight, overall_total_price, overall_stone_price, overall_total_mc, overall_tax_amt, 
+                advance_gross_wt, fine_wt, advance_finewt_amt, advance_amount, balance_amt, net_wt, summary_price, 
+                summary_rate, receipt_amt, actual_order_id
+              ) VALUES (${Array(values.length).fill("?").join(", ")})`;
+            
+            db.query(insertSql, values, (err, result) => {
+              if (err) reject(err);
+              else {
+                isNewOrderInserted = true; // ✅ Mark that a new order was added
+                if (!firstOrderData) firstOrderData = orderData; // capture first inserted order
+                resolve(result);
+              }
+            });
+          }
+        });
+      });
+    });
+
+    await Promise.all(queries);
+
+    // ✅ Send SMS only if a new order was inserted
+    if (isNewOrderInserted && firstOrderData && firstOrderData.mobile && firstOrderData.order_number) {
+      try {
+        const smsText = `Dear ${firstOrderData.account_name || "Customer"}, We have received your order.%0AOrder no: ${firstOrderData.order_number}%0AItem: ${firstOrderData.subcategory} (${firstOrderData.purity || "22 carats"})%0AEst Wt: ${firstOrderData.total_weight_aw || "N/A"} grams%0AEst Delivery Date: ${firstOrderData.estimated_delivery_date || "N/A"}%0AThank you%0ANew Friends Jewellers`;
+
+        const url = "https://www.smsjust.com/blank/sms/user/urlsms.php";
+        const params = {
+          username: process.env.SMS_USERNAME || "friendsjewellers",
+          pass: process.env.SMS_PASSWORD || "user@123",
+          senderid: process.env.SMS_SENDERID || "FRNJEW",
+          dest_mobileno: firstOrderData.mobile,
+          message: smsText, // already URL encoded with %0A for line breaks
+          dltentityid: process.env.SMS_ENTITYID || "1101383680000087435",
+          dlttempid: process.env.SMS_ORDERCONFIRMEDTEMPLATEID || "1107176042640547916",
+          response: "Y",
+        };
+
+        const finalUrl = `${url}?${Object.entries(params)
+          .map(([k, v]) => `${k}=${v}`)
+          .join("&")}`;
+
+        await axios.get(finalUrl);
+        // console.log("✅ SMS sent successfully:", firstOrderData.mobile);
+      } catch (smsError) {
+        console.error("❌ Failed to send SMS:", smsError.message);
+      }
+    }
+
+    res.status(201).json({ message: "All orders processed successfully", insertedOrUpdated: orders.length });
+  } catch (error) {
+    console.error("Error processing order:", error);
+    res.status(400).json({ error: "Invalid request format", details: error.message });
+  }
 };
+
 
 const getAllOrders = (req, res) => {
     OrderModel.getAllOrders((err, results) => {
