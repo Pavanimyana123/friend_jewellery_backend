@@ -11,78 +11,82 @@ const otpStore = new Map(); // { mobile: { otp, expiresAt } }
 
 // SMS configuration
 const SMS_CONFIG = {
-  username: process.env.SMS_USERNAME || 'friendsjewellers',
-  password: process.env.SMS_PASSWORD || 'user@123',
-  senderId: process.env.SMS_SENDERID || 'FRNJEW',
-  entityId: process.env.SMS_ENTITYID || '1101383680000087435',
-  // Template IDs based on message type
+  username: process.env.SMS_USERNAME || "friendsjewellers",
+  password: process.env.SMS_PASSWORD || "user@123",
+  senderId: process.env.SMS_SENDERID || "FRNJEW",
+  entityId: process.env.SMS_ENTITYID || "1101383680000087435",
   templateIds: {
-    cust_reg: process.env.SMS_REGISTRATIONTEMPLATEID || '1107175681528365074',
-    app_download: process.env.SMS_ORDERTEMPLATEID || '1107175024829366753',
-    default: process.env.SMS_OTPTEMPLATEID || '1107175024835612317'
-  }
+    cust_reg: process.env.SMS_REGISTRATIONTEMPLATEID || "1107175681528365074",
+    app_download: process.env.SMS_APKDOWNLOADTEMPLATEID || "1107176139706909553",
+    default: process.env.SMS_OTPTEMPLATEID || "1107175024835612317",
+  },
 };
 
-// SMS sending function
-async function sendSMS(phoneNumber, message, templateType = 'default') {
+// ✅ SMS sending function
+async function sendSMS(phoneNumber, message, templateType = "default") {
   try {
-    // Prepare the request payload for SMSJust API
-    const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${SMS_CONFIG.username}&pass=${SMS_CONFIG.password}&senderid=${SMS_CONFIG.senderId}&dest_mobileno=${phoneNumber.replace(/\D/g, '')}&message=${encodeURIComponent(message)}&dltentityid=${SMS_CONFIG.entityId}&dlttempid=${SMS_CONFIG.templateIds[templateType] || SMS_CONFIG.templateIds.default}&response=Y`;
+    const cleanedNumber = phoneNumber.replace(/\D/g, "");
+    if (cleanedNumber.length !== 10) {
+      throw new Error("Invalid phone number length");
+    }
+
+    const templateId =
+      SMS_CONFIG.templateIds[templateType] || SMS_CONFIG.templateIds.default;
+
+    // ✅ Match the exact DLT-approved message format
+    let finalMessage = message;
+    if (templateType === "app_download") {
+      finalMessage =
+        "Dear Customer, Please click on the link below to download the APK to know your order details : https://drive.google.com/file/d/1oVzEOoTlWQnQpZB1-iln3NjbwjXw-Ybn/view?usp=drive_link - NEW FRIENDS JEWELLERY";
+    } else if (templateType === "cust_reg") {
+      finalMessage =
+        "Dear Customer, please complete your registration by clicking the link below: https://newfriendsjewellers.com/c-register";
+    }
+
+    const smsUrl = `https://www.smsjust.com/blank/sms/user/urlsms.php?username=${SMS_CONFIG.username}&pass=${SMS_CONFIG.password}&senderid=${SMS_CONFIG.senderId}&dest_mobileno=${cleanedNumber}&message=${encodeURIComponent(
+      finalMessage
+    )}&dltentityid=${SMS_CONFIG.entityId}&dlttempid=${templateId}&response=Y`;
+
+    // console.log("SMS URL=",smsUrl)
 
     const response = await axios.get(smsUrl);
-    
-    return {
-      success: true,
-      messageId: response.data || null
-    };
+
+    // console.log(`✅ SMS sent to ${cleanedNumber}:`, response.data);
+
+    return { success: true, messageId: response.data || null };
   } catch (error) {
-    console.error('SMS sending error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    console.error("❌ SMS sending error:", error.message);
+    return { success: false, error: error.message };
   }
 }
 
-// API endpoint to send SMS to multiple numbers
-router.post('/send-sms', async (req, res) => {
+
+// ✅ POST API endpoint to send SMS to multiple numbers
+router.post("/send-sms", async (req, res) => {
   const { phoneNumbers, message, template } = req.body;
 
-  // Validate request
-  if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
-    return res.status(400).json({ error: 'Phone numbers array is required' });
+  // Basic validation
+  if (!Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+    return res.status(400).json({ error: "Phone numbers array is required" });
   }
-
-  if (!message || typeof message !== 'string') {
-    return res.status(400).json({ error: 'Message is required' });
+  if (!message || typeof message !== "string") {
+    return res.status(400).json({ error: "Message is required" });
   }
 
   try {
     const results = [];
     let sentCount = 0;
 
-    // Send SMS to each phone number
+    // Loop through all numbers
     for (const phoneNumber of phoneNumbers) {
-      // Basic phone number validation
-      if (!phoneNumber || phoneNumber.replace(/\D/g, '').length < 10) {
-        results.push({
-          phoneNumber,
-          success: false,
-          error: 'Invalid phone number'
-        });
-        continue;
-      }
-
       const result = await sendSMS(phoneNumber, message, template);
-      if (result.success) {
-        sentCount++;
-      }
-      
+
+      if (result.success) sentCount++;
       results.push({
         phoneNumber,
         success: result.success,
         messageId: result.messageId,
-        error: result.error
+        error: result.error,
       });
     }
 
@@ -90,11 +94,11 @@ router.post('/send-sms', async (req, res) => {
       success: true,
       sentCount,
       totalCount: phoneNumbers.length,
-      results
+      results,
     });
   } catch (error) {
-    console.error('Error in send-sms endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("🔥 Error in /send-sms endpoint:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -122,10 +126,10 @@ router.post('/send-otp', async (req, res) => {
 
   // Send SMS using the sendSMS function
   const message = `Dear Customer, Your OTP number is ${otp}, Do not share it with anyone - FRIENDS JEWELLERS`;
-  
+
   try {
     const result = await sendSMS(mobile, message, 'default');
-    
+
     if (result.success) {
       return res.json({ message: 'OTP sent successfully' });
     } else {
