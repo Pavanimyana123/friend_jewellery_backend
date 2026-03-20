@@ -122,28 +122,30 @@ const createOrder = async (req, res) => {
             const actual_order_id = orderData.actual_order_id || ++currentActualId;
             const voucher_number = `${orderData.order_number}-${orderData.bill_number}`;
 
-            const values = [
-                orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
-                orderData.email || "", orderData.address1 || "", orderData.address2 || "",
-                orderData.city || "", orderData.pincode || "", orderData.state || "",
-                orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
-                orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
-                orderData.order_number || "", orderData.bill_number || "", voucher_number, orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
-                orderData.metal || "", orderData.category || "", orderData.subcategory || "",
-                orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
-                orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
-                orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
-                orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
-                orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
-                orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
-                orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
-                imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
-                orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
-                orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
-                orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
-                orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
-                orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
-            ];
+         const values = [
+    orderData.account_id || null, orderData.mobile || "", orderData.account_name || "",
+    orderData.email || "", orderData.address1 || "", orderData.address2 || "",
+    orderData.city || "", orderData.pincode || "", orderData.state || "",
+    orderData.state_code || "", orderData.aadhar_card || "", orderData.gst_in || "",
+    orderData.pan_card || "", orderData.date || new Date().toISOString().split("T")[0],
+    orderData.order_number || "", orderData.bill_number || "", 
+    orderData.manual_order_number || "", // ✅ ADD THIS LINE
+    voucher_number, orderData.estimated_delivery_date === "" ? null : orderData.estimated_delivery_date ? new Date(orderData.estimated_delivery_date).toISOString().split('T')[0] : null,
+    orderData.metal || "", orderData.category || "", orderData.subcategory || "",
+    orderData.product_design_name || "", orderData.purity || null, orderData.gross_weight || 0,
+    orderData.stone_weight || 0, orderData.stone_price || 0, orderData.weight_bw || 0,
+    orderData.wastage_on || "", parseFloat(orderData.wastage_percentage) || 0, orderData.wastage_weight || 0,
+    orderData.total_weight_aw || 0, orderData.rate || 0, orderData.amount || 0,
+    orderData.mc_on || "", parseFloat(orderData.mc_percentage) || 0, orderData.total_mc || 0,
+    orderData.tax_percentage || 0, orderData.tax_amount || 0, orderData.total_price || 0,
+    orderData.remarks || "", orderData.delivery_date === "" ? null : orderData.delivery_date ? new Date(orderData.delivery_date).toISOString().split('T')[0] : null,
+    imageUrl, orderData.order_status || "", orderData.qty || "", orderData.status || "",
+    orderData.assigned_status || "Not Assigned", orderData.stone_name || "", orderData.o_size || "",
+    orderData.o_length || "", orderData.overall_total_weight || "", orderData.overall_total_price || "",
+    orderData.overall_stone_price || 0, orderData.overall_total_mc || 0, orderData.overall_tax_amt || 0,
+    orderData.advance_gross_wt || 0, orderData.fine_wt || 0, orderData.advance_finewt_amt || 0, orderData.advance_amount || 0,
+    orderData.balance_amt || 0, orderData.net_wt || 0, orderData.summary_price || 0, orderData.summary_rate || 0, orderData.receipt_amt || 0, actual_order_id
+];
 
             return new Promise((resolve, reject) => {
                 db.query("SELECT 1 FROM orders WHERE actual_order_id = ?", [actual_order_id], (err, result) => {
@@ -154,7 +156,7 @@ const createOrder = async (req, res) => {
                         const updateSql = `
               UPDATE orders SET 
                 account_id=?, mobile=?, account_name=?, email=?, address1=?, address2=?, city=?, pincode=?, state=?, state_code=?,
-                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, bill_number=?, voucher_number=?, estimated_delivery_date=?, metal=?, category=?,
+                aadhar_card=?, gst_in=?, pan_card=?, date=?, order_number=?, bill_number=?, manual_order_number=?, voucher_number=?, estimated_delivery_date=?, metal=?, category=?,
                 subcategory=?, product_design_name=?, purity=?, gross_weight=?, stone_weight=?, stone_price=?, weight_bw=?, wastage_on=?, wastage_percentage=?, wastage_weight=?,
                 total_weight_aw=?, rate=?, amount=?, mc_on=?, mc_percentage=?, total_mc=?, tax_percentage=?, tax_amount=?, total_price=?,remarks=?, 
                 delivery_date=?, image_url=?, order_status=?, qty=?, status=?, assigned_status=?, stone_name=?, o_size=?, o_length=?, overall_total_weight=?,
@@ -176,7 +178,7 @@ const createOrder = async (req, res) => {
                         const insertSql = `
               INSERT INTO orders (
                 account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-                aadhar_card, gst_in, pan_card, date, order_number, bill_number, voucher_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
+                aadhar_card, gst_in, pan_card, date, order_number, bill_number, manual_order_number, voucher_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
                 gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
                 total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
                 remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 

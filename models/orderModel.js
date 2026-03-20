@@ -15,7 +15,7 @@ const getLastOrderNumber = (callback) => {
 const createOrder = (orderData, callback) => {
   const sql = `INSERT INTO orders (
         account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-        aadhar_card, gst_in, pan_card, date, order_number, bill_number, voucher_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
+        aadhar_card, gst_in, pan_card, date, order_number, bill_number, manual_order_number, voucher_number, estimated_delivery_date, metal, category, subcategory, product_design_name, purity, 
         gross_weight, stone_weight, stone_price, weight_bw, wastage_on, wastage_percentage, wastage_weight, 
         total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, tax_percentage, tax_amount, total_price, 
         remarks, delivery_date, image_url, order_status, qty, status, assigned_status, stone_name, o_size, o_length, 
@@ -117,17 +117,17 @@ const insertNewOrder = (order, callback) => {
   const sql = `
       INSERT INTO orders 
       (account_id, mobile, account_name, email, address1, address2, city, pincode, state, state_code, 
-      aadhar_card, gst_in, pan_card, date, order_number, bill_number, voucher_number, estimated_delivery_date, metal, category, subcategory, 
+      aadhar_card, gst_in, pan_card, date, order_number, bill_number, manual_order_number, voucher_number, estimated_delivery_date, metal, category, subcategory, 
       product_design_name, status, purity, gross_weight, stone_weight, stone_price, weight_bw, wastage_on, 
       wastage_percentage, wastage_weight, total_weight_aw, rate, amount, mc_on, mc_percentage, total_mc, 
       tax_percentage, tax_amount, total_price, remarks, delivery_date, image_url, order_status, qty, actual_order_id) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
     order.account_id, order.mobile, order.account_name, order.email, order.address1, order.address2,
     order.city, order.pincode, order.state, order.state_code, order.aadhar_card, order.gst_in, order.pan_card,
-    order.date, order.order_number, order.bill_number, voucher_number, order.estimated_delivery_date, order.metal, order.category, order.subcategory,
+    order.date, order.order_number, order.bill_number, order.manual_order_number, voucher_number, order.estimated_delivery_date, order.metal, order.category, order.subcategory,
     order.requested_design_name, "Actual Order", order.purity, order.gross_weight, order.stone_weight, order.stone_price, order.weight_bw,
     order.wastage_on, order.wastage_percentage, order.wastage_weight, order.total_weight_aw, order.rate, order.amount,
     order.mc_on, order.mc_percentage, order.total_mc, order.tax_percentage, order.tax_amount, order.total_price,
